@@ -372,12 +372,14 @@ public class UrlUtils {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();
         //FIXME accept providerUrl with '*' as interface name, after carefully thought about all possible scenarios I think it's ok to add this condition.
+        //如果服务端serviceInterface和客户端serviceInterface任何一个为 *,或者 相等
         if (!(Constants.ANY_VALUE.equals(consumerInterface)
                 || Constants.ANY_VALUE.equals(providerInterface)
                 || StringUtils.isEquals(consumerInterface, providerInterface))) {
             return false;
         }
 
+        //如果服务端和客户端属于不同category
         if (!isMatchCategory(providerUrl.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY),
                 consumerUrl.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY))) {
             return false;

@@ -25,5 +25,6 @@ import org.apache.dubbo.common.URL;
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)
  * @see org.apache.dubbo.registry.support.AbstractRegistry
  */
+//该接口是注册中心模块的服务接口，提供了注册、取消注册、订阅、取消订阅以及查询符合条件的已注册数据。
 public interface Registry extends Node, RegistryService {
 }

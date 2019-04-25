@@ -19,22 +19,23 @@ package org.apache.dubbo.common;
 /**
  * Node. (API/SPI, Prototype, ThreadSafe)
  */
+//节点的接口，里面协定了关于节点的一些操作方法
 public interface Node {
-
+    //获得节点地址
     /**
      * get url.
      *
      * @return url.
      */
     URL getUrl();
-
+    //判断节点是否可用
     /**
      * is available.
      *
      * @return available.
      */
     boolean isAvailable();
-
+    //销毁节点
     /**
      * destroy.
      */

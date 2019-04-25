@@ -30,6 +30,13 @@ import java.lang.annotation.Target;
  * @see ExtensionLoader
  * @see URL
  */
+// 该注解为了保证dubbo在内部调用具体实现的时候不是硬编码来指定引用哪个实现，
+// 也就是为了适配一个接口的多种实现，
+// 这样做符合模块接口设计的可插拔原则，也增加了整个框架的灵活性，
+// 该注解也实现了扩展点自动装配的特性。
+// 作用 : 1.在实现类上面加上@Adaptive注解，表明该实现类是该接口的适配器。
+// 2. 在接口方法上加@Adaptive注解，dubbo会动态生成适配器类。
+//有该注解的方法的参数必须包含URL，ExtensionLoader会通过createAdaptiveExtensionClassCode方法动态生成一个Transporter$Adaptive类
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})

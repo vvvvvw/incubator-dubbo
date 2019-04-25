@@ -18,11 +18,7 @@ package org.apache.dubbo.common.extension;
 
 import org.apache.dubbo.common.URL;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Activate. This annotation is useful for automatically activate certain extensions with the given criteria,
@@ -50,6 +46,10 @@ public @interface Activate {
      * @return group names to match
      * @see ExtensionLoader#getActivateExtension(URL, String, String)
      */
+    /**
+     * 只有groups其中之前被匹配上才会激活当前扩展，group参数在ExtensionLoadergetActivateExtension(URL url, String key, String group)中被用于匹配
+     * @return
+     */
     String[] group() default {};
 
     /**
@@ -63,6 +63,15 @@ public @interface Activate {
      * @see ExtensionLoader#getActivateExtension(URL, String)
      * @see ExtensionLoader#getActivateExtension(URL, String, String)
      */
+    /**
+     * Key过滤条件。当指定key出现在URL的parameters中，则激活扩展。
+     * <p/>
+     * 示例：<br/>
+     * 注解的值 <code>@Activate("cache,validatioin")</code>，
+     * 则当前扩展只会在cache或者validation出现URL的参数中才会返回当前扩展。
+     * <br/>
+     * 如没有设置，则不过滤。
+     */
     String[] value() default {};
 
     /**
@@ -70,6 +79,10 @@ public @interface Activate {
      * Deprecated since 2.7.0
      *
      * @return extension list which should be put before the current one
+     */
+    /**
+     * 相对排序信息，可以不提供。
+     *  对应的扩展 在 本扩展之前
      */
     @Deprecated
     String[] before() default {};
@@ -80,6 +93,10 @@ public @interface Activate {
      *
      * @return extension list which should be put after the current one
      */
+    /**
+     * 相对排序信息，可以不提供。
+     *  对应的扩展 在 本扩展之后
+     */
     @Deprecated
     String[] after() default {};
 
@@ -87,6 +104,9 @@ public @interface Activate {
      * Absolute ordering info, optional
      *
      * @return absolute ordering info
+     */
+    /**
+     * 绝对排序信息，可以不提供。
      */
     int order() default 0;
 }
