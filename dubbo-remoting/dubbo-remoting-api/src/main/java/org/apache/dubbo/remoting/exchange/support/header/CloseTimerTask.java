@@ -38,14 +38,18 @@ public class CloseTimerTask extends AbstractTimerTask {
     @Override
     protected void doTask(Channel channel) {
         try {
+            // 最后一次接收到消息的时间戳
             Long lastRead = lastRead(channel);
+            // 最后一次发送消息的时间戳
             Long lastWrite = lastWrite(channel);
             Long now = now();
             // check ping & pong at server
+            // 如果最后一次接收或者发送消息到时间到现在的时间间隔超过了超时时间
             if ((lastRead != null && now - lastRead > idleTimeout)
                     || (lastWrite != null && now - lastWrite > idleTimeout)) {
                 logger.warn("Close channel " + channel + ", because idleCheck timeout: "
                         + idleTimeout + "ms");
+                // 如果不是客户端，也就是是服务端返回响应给客户端，但是客户端挂掉了，则服务端关闭客户端
                 channel.close();
             }
         } catch (Throwable t) {

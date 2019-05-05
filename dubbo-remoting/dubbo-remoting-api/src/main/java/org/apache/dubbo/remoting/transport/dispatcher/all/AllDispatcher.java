@@ -23,12 +23,15 @@ import org.apache.dubbo.remoting.Dispatcher;
 /**
  * default thread pool configure
  */
+// 线程池调度方法：任何消息以及操作都分发到线程池中
+//内部使用了 AllChannelHandler
 public class AllDispatcher implements Dispatcher {
 
     public static final String NAME = "all";
 
     @Override
     public ChannelHandler dispatch(ChannelHandler handler, URL url) {
+        // 线程池调度方法：任何消息以及操作都分发到线程池中
         return new AllChannelHandler(handler, url);
     }
 

@@ -41,18 +41,23 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class AbstractClient extends AbstractEndpoint implements Client {
 
+    //客户端线程名称
     protected static final String CLIENT_THREAD_POOL_NAME = "DubboClientHandler";
     private static final Logger logger = LoggerFactory.getLogger(AbstractClient.class);
+    //锁住了连接的逻辑
     private final Lock connectLock = new ReentrantLock();
+    // 是否重连的配置，默认为false
     private final boolean needReconnect;
     protected volatile ExecutorService executor;
 
     public AbstractClient(URL url, ChannelHandler handler) throws RemotingException {
         super(url, handler);
 
+        // 从url中获得是否重连的配置，默认为false
         needReconnect = url.getParameter(Constants.SEND_RECONNECT_KEY, false);
 
         try {
+            //打开客户端
             doOpen();
         } catch (Throwable t) {
             close();
@@ -61,12 +66,14 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                             + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
         try {
+            //连接客户端
             // connect.
             connect();
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " " + NetUtils.getLocalAddress() + " connect to the server " + getRemoteAddress());
             }
         } catch (RemotingException t) {
+            //是否检查 服务端能否连接上
             if (url.getParameter(Constants.CHECK_KEY, true)) {
                 close();
                 throw t;
@@ -81,15 +88,20 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
                             + " connect to the server " + getRemoteAddress() + ", cause: " + t.getMessage(), t);
         }
 
+        // 从缓存中获得线程池 todo ？ 为什么在缓存池里
         executor = (ExecutorService) ExtensionLoader.getExtensionLoader(DataStore.class)
                 .getDefaultExtension().get(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
+        // 清除线程池缓存
         ExtensionLoader.getExtensionLoader(DataStore.class)
                 .getDefaultExtension().remove(Constants.CONSUMER_SIDE, Integer.toString(url.getPort()));
     }
 
     protected static ChannelHandler wrapChannelHandler(URL url, ChannelHandler handler) {
+        // 加入线程名称
         url = ExecutorUtil.setThreadName(url, CLIENT_THREAD_POOL_NAME);
+        // 设置使用的线程池类型
         url = url.addParameterIfAbsent(Constants.THREADPOOL_KEY, Constants.DEFAULT_CLIENT_THREADPOOL);
+        // 包装
         return ChannelHandlers.wrap(handler, url);
     }
 
@@ -97,6 +109,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         return new InetSocketAddress(NetUtils.filterLocalHost(getUrl().getHost()), getUrl().getPort());
     }
 
+    //得到远程地址
     @Override
     public InetSocketAddress getRemoteAddress() {
         Channel channel = getChannel();
@@ -232,6 +245,7 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
     }
 
+    //实现了客户端的重连逻辑
     @Override
     public void reconnect() throws RemotingException {
         if (!isConnected()) {

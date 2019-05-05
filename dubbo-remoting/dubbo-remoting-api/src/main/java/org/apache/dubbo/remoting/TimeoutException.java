@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
  * @see org.apache.dubbo.remoting.exchange.ResponseFuture#get()
  * @see org.apache.dubbo.remoting.exchange.ResponseFuture#get(int)
  */
+// TimeoutException继承了RemotingException类，TimeoutException是超时异常。
 public class TimeoutException extends RemotingException {
 
     public static final int CLIENT_SIDE = 0;

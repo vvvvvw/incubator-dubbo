@@ -30,6 +30,7 @@ import java.util.Collection;
  *
  *
  */
+//Server装饰器类
 public class ServerDelegate implements Server {
 
     private transient Server server;

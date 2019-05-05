@@ -214,6 +214,7 @@ public final class Version {
         checkDuplicate(cls.getName().replace('.', '/') + ".class", failOnError);
     }
 
+    // 检查 类加载路径上是否有其他定义该类名的类
     public static void checkDuplicate(Class<?> cls) {
         checkDuplicate(cls, false);
     }

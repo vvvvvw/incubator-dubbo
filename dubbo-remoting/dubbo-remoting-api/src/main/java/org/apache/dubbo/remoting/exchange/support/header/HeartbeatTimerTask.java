@@ -26,10 +26,16 @@ import org.apache.dubbo.remoting.exchange.Request;
 /**
  * HeartbeatTimerTask
  */
+//心跳任务，里面包含了核心的心跳策略。
+//无论是接收消息还是发送消息，只要超过了设置的心跳间隔，就发送心跳消息来测试是否断开
 public class HeartbeatTimerTask extends AbstractTimerTask {
 
     private static final Logger logger = LoggerFactory.getLogger(HeartbeatTimerTask.class);
 
+    /**
+     * 判断心跳失败的时间间隔
+     * // 如果最后一次接收或者发送消息到时间到现在的时间间隔超过了心跳间隔时间
+     */
     private final int heartbeat;
 
     HeartbeatTimerTask(ChannelProvider channelProvider, Long heartbeatTick, int heartbeat) {
@@ -40,14 +46,22 @@ public class HeartbeatTimerTask extends AbstractTimerTask {
     @Override
     protected void doTask(Channel channel) {
         try {
+            // 最后一次接收到消息的时间戳
             Long lastRead = lastRead(channel);
+            // 最后一次发送消息的时间戳
             Long lastWrite = lastWrite(channel);
+            // 如果最后一次接收或者发送消息到时间到现在的时间间隔超过了心跳间隔时间
             if ((lastRead != null && now() - lastRead > heartbeat)
                     || (lastWrite != null && now() - lastWrite > heartbeat)) {
+                // 创建一个request
                 Request req = new Request();
+                // 设置版本号
                 req.setVersion(Version.getProtocolVersion());
+                // 设置需要得到响应
                 req.setTwoWay(true);
+                // 设置事件类型，为心跳事件
                 req.setEvent(Request.HEARTBEAT_EVENT);
+                // 发送心跳请求
                 channel.send(req);
                 if (logger.isDebugEnabled()) {
                     logger.debug("Send heartbeat to remote channel " + channel.getRemoteAddress()

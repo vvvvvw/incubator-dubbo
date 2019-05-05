@@ -30,6 +30,7 @@ import java.net.InetSocketAddress;
  * @see org.apache.dubbo.remoting.Transporter#bind(org.apache.dubbo.common.URL, ChannelHandler)
  * @see org.apache.dubbo.remoting.Transporter#connect(org.apache.dubbo.common.URL, ChannelHandler)
  */
+//RemotingException继承了Exception类，是远程通信的基础异常。
 public class RemotingException extends Exception {
 
     private static final long serialVersionUID = -3160452149606778709L;

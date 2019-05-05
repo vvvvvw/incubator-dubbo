@@ -106,6 +106,7 @@ public class NetUtils {
         return Constants.ANYHOST_VALUE.equals(host);
     }
 
+    // host是否无效或者为本地地址
     // FIXME: should remove this method completely
     public static boolean isInvalidLocalHost(String host) {
         return host == null
@@ -189,6 +190,7 @@ public class NetUtils {
         return address == null ? Constants.LOCALHOST_VALUE : address.getHostAddress();
     }
 
+    // 解析host，如果 host 解析出来的 主机名无效，则使用本地地址
     public static String filterLocalHost(String host) {
         if (host == null || host.length() == 0) {
             return host;
@@ -196,15 +198,18 @@ public class NetUtils {
         if (host.contains("://")) {
             URL u = URL.valueOf(host);
             if (NetUtils.isInvalidLocalHost(u.getHost())) {
+                //如果 host 解析出来的 主机名无效，则使用本地地址
                 return u.setHost(NetUtils.getLocalHost()).toFullString();
             }
         } else if (host.contains(":")) {
             int i = host.lastIndexOf(':');
             if (NetUtils.isInvalidLocalHost(host.substring(0, i))) {
+                //如果 host 解析出来的 主机名无效，则使用本地地址
                 return NetUtils.getLocalHost() + host.substring(i);
             }
         } else {
             if (NetUtils.isInvalidLocalHost(host)) {
+                //如果 host 解析出来的 主机名无效，则使用本地地址
                 return NetUtils.getLocalHost();
             }
         }

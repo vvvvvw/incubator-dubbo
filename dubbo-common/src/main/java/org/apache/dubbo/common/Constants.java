@@ -221,6 +221,7 @@ public class Constants {
 
     public static final String MONITOR_KEY = "monitor";
 
+    //客户端还是服务端 value:client 客户端 server:服务端
     public static final String SIDE_KEY = "side";
 
     public static final String PROVIDER_SIDE = "provider";
@@ -271,14 +272,17 @@ public class Constants {
 
     public static final String DEFAULT_CLIENT_THREADPOOL = "cached";
 
+    //线程池类型
     public static final String THREADPOOL_KEY = "threadpool";
 
+    //线程名
     public static final String THREAD_NAME_KEY = "threadname";
 
     public static final String IO_THREADS_KEY = "iothreads";
 
     public static final String CORE_THREADS_KEY = "corethreads";
 
+    //这个值可以表示 在value比核心线程数小的时候表示核心线程数，否则表示最大线程数。如果核心线程数和最大线程数一致，则都设置为该值
     public static final String THREADS_KEY = "threads";
 
     public static final String QUEUES_KEY = "queues";
@@ -289,6 +293,7 @@ public class Constants {
 
     public static final String BUFFER_KEY = "buffer";
 
+    //包最大长度
     public static final String PAYLOAD_KEY = "payload";
 
     public static final String REFERENCE_FILTER_KEY = "reference.filter";
@@ -309,6 +314,9 @@ public class Constants {
 
     public static final String IDLE_TIMEOUT_KEY = "idle.timeout";
 
+    /**
+     * 心跳周期
+     */
     public static final String HEARTBEAT_KEY = "heartbeat";
 
     /**
@@ -316,6 +324,7 @@ public class Constants {
      * duration / HEATBEAT_CHECK_TICK, check if a connection should be closed on server side, and if reconnect on
      * client side
      */
+    // 每隔duration / HEATBEAT_CHECK_TICK，检查 1.客户端在心跳时间间隔内发送了心跳或者其他信息到服务端 2.和服务端的通道是否已经关闭 3.在心跳时间间隔内是否从服务端获取到过响应
     public static final int HEARTBEAT_CHECK_TICK = 3;
 
     /**
@@ -328,6 +337,7 @@ public class Constants {
      */
     public static final int TICKS_PER_WHEEL = 128;
 
+    //心跳超时配置，默认是心跳周期的三倍
     public static final String HEARTBEAT_TIMEOUT_KEY = "heartbeat.timeout";
 
     public static final String CONNECT_TIMEOUT_KEY = "connect.timeout";
@@ -344,6 +354,7 @@ public class Constants {
 
     public static final String CODEC_KEY = "codec";
 
+    //序列化对象
     public static final String SERIALIZATION_KEY = "serialization";
 
     public static final String EXTENSION_KEY = "extension";
@@ -381,6 +392,7 @@ public class Constants {
 
     public static final String CHARSET_KEY = "charset";
 
+    //是否开启重连
     public static final String RECONNECT_KEY = "reconnect";
 
     public static final String SEND_RECONNECT_KEY = "send.reconnect";
@@ -472,6 +484,7 @@ public class Constants {
 
     public static final String CHANNEL_READONLYEVENT_SENT_KEY = "channel.readonly.sent";
 
+    //// 发送 READONLY_EVENT事件给所有连接该服务器的客户端，表示 Server 不可读了。
     public static final String CHANNEL_SEND_READONLYEVENT_KEY = "channel.readonly.send";
 
     public static final String COUNT_PROTOCOL = "count";

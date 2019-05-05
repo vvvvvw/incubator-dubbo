@@ -469,13 +469,24 @@ public class UrlUtils {
                 PROVIDERS_CATEGORY.equals(url.getParameter(CATEGORY_KEY, PROVIDERS_CATEGORY));
     }
 
+    /**
+     * 获取心跳时间间隔
+     */
     public static int getHeartbeat(URL url) {
         return url.getParameter(Constants.HEARTBEAT_KEY, Constants.DEFAULT_HEARTBEAT);
     }
 
+    /**
+     *
+     * @param url
+     * @return
+     */
+    //获得心跳超时配置
     public static int getIdleTimeout(URL url) {
         int heartBeat = getHeartbeat(url);
+        // 获得心跳超时配置，默认是心跳周期的三倍
         int idleTimeout = url.getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartBeat * 3);
+        // 小于 心跳超时时间间隔的2倍，抛出异常
         if (idleTimeout < heartBeat * 2) {
             throw new IllegalStateException("idleTimeout < heartbeatInterval * 2");
         }

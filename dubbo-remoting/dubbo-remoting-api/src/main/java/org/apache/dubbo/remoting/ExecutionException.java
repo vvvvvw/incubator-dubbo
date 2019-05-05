@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
  *
  * @export
  */
+//ExecutionException继承了RemotingException类，ExecutionException是远程通信的执行异常。
 public class ExecutionException extends RemotingException {
 
     private static final long serialVersionUID = -2531085236111056860L;

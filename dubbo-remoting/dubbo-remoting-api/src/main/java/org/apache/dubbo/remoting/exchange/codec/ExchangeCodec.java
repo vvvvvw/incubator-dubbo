@@ -44,6 +44,8 @@ import java.io.InputStream;
 /**
  * ExchangeCodec.
  */
+////该类继承了TelnetCodec，是信息交换编解码器。
+    //dubbo将一条消息分成了协议头和协议体，用来解决粘包拆包问题，但是头跟体在编解码上有区别
 public class ExchangeCodec extends TelnetCodec {
 
     // header length.

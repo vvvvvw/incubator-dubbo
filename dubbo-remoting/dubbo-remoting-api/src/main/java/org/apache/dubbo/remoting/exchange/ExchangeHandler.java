@@ -25,11 +25,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * ExchangeHandler. (API, Prototype, ThreadSafe)
  */
+//信息交换处理器接口
+//该接口只定义了一个回复请求结果的方法，返回的是请求结果
 public interface ExchangeHandler extends ChannelHandler, TelnetHandler {
 
     /**
      * reply.
-     *
+     * 回复请求结果
      * @param channel
      * @param request
      * @return response

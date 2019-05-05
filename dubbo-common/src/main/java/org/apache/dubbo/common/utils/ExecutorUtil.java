@@ -51,12 +51,15 @@ public class ExecutorUtil {
      * @param executor the Executor to shutdown
      * @param timeout  the timeout in milliseconds before termination
      */
+    //优雅关闭
     public static void gracefulShutdown(Executor executor, int timeout) {
         if (!(executor instanceof ExecutorService) || isTerminated(executor)) {
             return;
         }
         final ExecutorService es = (ExecutorService) executor;
         try {
+            // 停止接收新的任务并且等待已经提交的任务（包含提交正在执行和提交未执行）执行完成
+            // 当所有提交任务执行完毕，线程池即被关闭
             // Disable new tasks from being submitted
             es.shutdown();
         } catch (SecurityException ex2) {
@@ -65,14 +68,19 @@ public class ExecutorUtil {
             return;
         }
         try {
+            // 当等待超过设定时间时，会监测ExecutorService是否已经关闭，如果没关闭，再关闭一次
             // Wait a while for existing tasks to terminate
             if (!es.awaitTermination(timeout, TimeUnit.MILLISECONDS)) {
+                // 试图停止所有正在执行的线程，不再处理还在池队列中等待的任务
+                // ShutdownNow()并不代表线程池就一定立即就能退出，它可能必须要
+                // 等待所有正在执行的任务都执行完成了才能退出。
                 es.shutdownNow();
             }
         } catch (InterruptedException ex) {
             es.shutdownNow();
             Thread.currentThread().interrupt();
         }
+        //如果调用了 shutdownNow还没关闭的话，启动一个异步线程每隔10ms循环1000次调用shutdownNow
         if (!isTerminated(es)) {
             newThreadToCloseExecutor(es);
         }
@@ -100,6 +108,7 @@ public class ExecutorUtil {
         }
     }
 
+    //启动一个异步线程每隔10ms循环1000次调用shutdownNow
     private static void newThreadToCloseExecutor(final ExecutorService es) {
         if (!isTerminated(es)) {
             shutdownExecutor.execute(new Runnable() {

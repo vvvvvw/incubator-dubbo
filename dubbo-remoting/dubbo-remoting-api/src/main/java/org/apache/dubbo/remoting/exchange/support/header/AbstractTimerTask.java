@@ -30,8 +30,10 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractTimerTask implements TimerTask {
 
+    //通道管理
     private final ChannelProvider channelProvider;
 
+    //间隔 单位：ms
     private final Long tick;
 
     protected volatile boolean cancel = false;
@@ -45,9 +47,11 @@ public abstract class AbstractTimerTask implements TimerTask {
     }
 
     static Long lastRead(Channel channel) {
+        //该通道最近一次读取的时间
         return (Long) channel.getAttribute(HeaderExchangeHandler.KEY_READ_TIMESTAMP);
     }
 
+    //该通道最近一次发送消息的时间
     static Long lastWrite(Channel channel) {
         return (Long) channel.getAttribute(HeaderExchangeHandler.KEY_WRITE_TIMESTAMP);
     }
@@ -80,7 +84,9 @@ public abstract class AbstractTimerTask implements TimerTask {
     @Override
     public void run(Timeout timeout) throws Exception {
         Collection<Channel> c = channelProvider.getChannels();
+        // 遍历所有通道
         for (Channel channel : c) {
+            // 如果通道关闭了，则跳过
             if (channel.isClosed()) {
                 continue;
             }
@@ -92,6 +98,7 @@ public abstract class AbstractTimerTask implements TimerTask {
     protected abstract void doTask(Channel channel);
 
     interface ChannelProvider {
+        //// 获得所有的通道集合，需要心跳的通道数组
         Collection<Channel> getChannels();
     }
 }

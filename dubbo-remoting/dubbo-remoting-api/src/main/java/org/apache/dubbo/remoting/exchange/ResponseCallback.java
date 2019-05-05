@@ -19,18 +19,19 @@ package org.apache.dubbo.remoting.exchange;
 /**
  * Callback
  */
+//回调的接口，定义了两个方法，分别是处理正常的响应结果和处理异常。
 public interface ResponseCallback {
 
     /**
      * done.
-     *
+     * 处理请求
      * @param response
      */
     void done(Object response);
 
     /**
      * caught exception.
-     *
+     * 处理异常
      * @param exception
      */
     void caught(Throwable exception);

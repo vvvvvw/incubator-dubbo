@@ -24,6 +24,7 @@ import org.apache.dubbo.registry.support.FailbackRegistry;
 /**
  * FailedRegisteredTask
  */
+//重试task
 public final class FailedRegisteredTask extends AbstractRetryTask {
 
     private static final String NAME = "retry register";

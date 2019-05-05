@@ -29,6 +29,7 @@ import org.apache.dubbo.remoting.transport.ChannelHandlerAdapter;
 /**
  * Exchanger facade. (API, Static, ThreadSafe)
  */
+////封装了ExchangeServer和ExchangeClient类，外观模式
 public class Exchangers {
 
     static {

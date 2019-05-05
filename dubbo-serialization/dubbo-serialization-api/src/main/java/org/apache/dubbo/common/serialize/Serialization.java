@@ -40,6 +40,7 @@ public interface Serialization {
      *
      * @return content type id
      */
+    //获取标识序列化类型的content-type的唯一id，推荐自定义实现使用的id大于20
     byte getContentTypeId();
 
     /**

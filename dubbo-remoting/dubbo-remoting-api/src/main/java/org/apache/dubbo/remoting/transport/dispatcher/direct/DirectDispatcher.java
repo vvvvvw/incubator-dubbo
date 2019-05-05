@@ -29,6 +29,7 @@ public class DirectDispatcher implements Dispatcher {
 
     @Override
     public ChannelHandler dispatch(ChannelHandler handler, URL url) {
+        // 直接处理消息，不分发到线程池，该线程池调度方法是不调度线程池，直接执行
         return handler;
     }
 

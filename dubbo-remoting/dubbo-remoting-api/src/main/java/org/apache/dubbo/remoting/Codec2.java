@@ -23,17 +23,23 @@ import org.apache.dubbo.remoting.buffer.ChannelBuffer;
 
 import java.io.IOException;
 
+//编解码器,编码器是讲应用程序的数据转化为网络格式，解码器则是讲网络格式
+// 转化为应用程序，同时具备这两种功能的单一组件就叫编解码器。
 @SPI
 public interface Codec2 {
 
+    //编码
     @Adaptive({Constants.CODEC_KEY})
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
 
+    //解码
     @Adaptive({Constants.CODEC_KEY})
     Object decode(Channel channel, ChannelBuffer buffer) throws IOException;
 
 
     enum DecodeResult {
+        // 需要更多输入和忽略一些输入(因为解码过程中，需要解决 TCP 拆包、
+        // 粘包的场景，所以增加了这两种解码结果)
         NEED_MORE_INPUT, SKIP_SOME_INPUT
     }
 

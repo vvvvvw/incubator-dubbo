@@ -44,8 +44,10 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     protected static final Logger logger = LoggerFactory.getLogger(HeaderExchangeHandler.class);
 
+    //该通道最近一次读取的时间
     public static final String KEY_READ_TIMESTAMP = HeartbeatHandler.KEY_READ_TIMESTAMP;
 
+    // 最后一次发送消息的时间戳
     public static final String KEY_WRITE_TIMESTAMP = HeartbeatHandler.KEY_WRITE_TIMESTAMP;
 
     private final ExchangeHandler handler;

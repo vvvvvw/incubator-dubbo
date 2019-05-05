@@ -25,10 +25,12 @@ import org.apache.dubbo.remoting.Client;
 /**
  * ReconnectTimerTask
  */
+//重连任务
 public class ReconnectTimerTask extends AbstractTimerTask {
 
     private static final Logger logger = LoggerFactory.getLogger(ReconnectTimerTask.class);
 
+    //通道最近一次读取的时间到现在的间隔超过idleTimeout，则尝试重连channel
     private final int idleTimeout;
 
     public ReconnectTimerTask(ChannelProvider channelProvider, Long heartbeatTimeoutTick, int idleTimeout) {
@@ -39,10 +41,12 @@ public class ReconnectTimerTask extends AbstractTimerTask {
     @Override
     protected void doTask(Channel channel) {
         try {
+            //该通道最近一次读取的时间
             Long lastRead = lastRead(channel);
             Long now = now();
 
             // Rely on reconnect timer to reconnect when AbstractClient.doConnect fails to init the connection
+            //如果通道不在连接，则重连
             if (!channel.isConnected()) {
                 try {
                     logger.info("Initial connection to " + channel);
@@ -50,11 +54,13 @@ public class ReconnectTimerTask extends AbstractTimerTask {
                 } catch (Exception e) {
                     logger.error("Fail to connect to " + channel, e);
                 }
+                // 如果最后一次接收消息的时间到现在已经超过了idleTimeout，重连
             // check pong at client
             } else if (lastRead != null && now - lastRead > idleTimeout) {
                 logger.warn("Reconnect to channel " + channel + ", because heartbeat read idle time out: "
                         + idleTimeout + "ms");
                 try {
+                    // 重新连接服务器
                     ((Client) channel).reconnect();
                 } catch (Exception e) {
                     logger.error(channel + "reconnect failed during idle time.", e);

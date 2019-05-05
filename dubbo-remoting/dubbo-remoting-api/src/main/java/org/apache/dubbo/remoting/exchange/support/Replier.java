@@ -22,11 +22,14 @@ import org.apache.dubbo.remoting.exchange.ExchangeChannel;
 /**
  * Replier. (API, Prototype, ThreadSafe)
  */
+//Request对应的是ExchangeHandler接口实现对象来处理，但有些时候我们需要不同数据类型对应不同的处理器，
+// 该类就是为了支持这一需求所设计的。
+    //该接口跟ExchangeHandler定义的方法也一样，只有请求的类型改为了范型
 public interface Replier<T> {
 
     /**
      * reply.
-     *
+     * 回复请求结果
      * @param channel
      * @param request
      * @return response

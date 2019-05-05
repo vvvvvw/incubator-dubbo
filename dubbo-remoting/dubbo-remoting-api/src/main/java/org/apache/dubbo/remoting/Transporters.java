@@ -25,9 +25,12 @@ import org.apache.dubbo.remoting.transport.ChannelHandlerDispatcher;
 /**
  * Transporter facade. (API, Static, ThreadSafe)
  */
+//封装了Transporter类，用到了设计模式的外观模式
 public class Transporters {
 
     static {
+        // check duplicate jar package
+        // 检查 类路径上是否有其他定义该类名的类
         // check duplicate jar package
         Version.checkDuplicate(Transporters.class);
         Version.checkDuplicate(RemotingException.class);
@@ -47,12 +50,15 @@ public class Transporters {
         if (handlers == null || handlers.length == 0) {
             throw new IllegalArgumentException("handlers == null");
         }
+        // 创建handler
         ChannelHandler handler;
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
+        // 调用Transporter的实现类对象的bind方法。
+        // 例如实现NettyTransporter，则调用NettyTransporter的connect，并且返回相应的server
         return getTransporter().bind(url, handler);
     }
 

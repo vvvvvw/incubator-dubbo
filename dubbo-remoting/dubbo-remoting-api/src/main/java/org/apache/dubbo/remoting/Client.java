@@ -25,13 +25,23 @@ import org.apache.dubbo.common.Resetable;
  *
  * @see org.apache.dubbo.remoting.Transporter#connect(org.apache.dubbo.common.URL, ChannelHandler)
  */
+//继承了Endpoint、Channel和Resetable接口
+//继承Endpoint原因:
+//客户端，在传输层，其实Client和Server的区别只是在语义上区别，
+// 并不区分请求和应答职责，在交换层客户端和服务端也是一个点，
+// 但是已经是有方向的点，所以区分了明确的请求和应答职责。
+// 两者都具备发送的能力，只是客户端和服务端所关注的事情不一样，
+//继承Channel原因:
+// 继承Channel是因为客户端跟通道是一一对应的，所以做了这样的设计
 public interface Client extends Endpoint, Channel, Resetable, IdleSensible {
 
     /**
      * reconnect.
      */
+    // 重连
     void reconnect() throws RemotingException;
 
+    // 重置，不推荐使用
     @Deprecated
     void reset(org.apache.dubbo.common.Parameters parameters);
 

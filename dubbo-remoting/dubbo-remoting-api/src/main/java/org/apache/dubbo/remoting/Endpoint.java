@@ -28,6 +28,8 @@ import java.net.InetSocketAddress;
  * @see org.apache.dubbo.remoting.Client
  * @see org.apache.dubbo.remoting.Server
  */
+//抽象出一个端的概念，也就是Endpoint接口，这个端就是一个点，而点对点之间
+// 是可以双向传输。在端的基础上在衍生出通道、客户端以及服务端的概念
 public interface Endpoint {
 
     /**
@@ -35,6 +37,7 @@ public interface Endpoint {
      *
      * @return url
      */
+    // 获得该端的url
     URL getUrl();
 
     /**
@@ -42,6 +45,7 @@ public interface Endpoint {
      *
      * @return channel handler
      */
+    // 获得该端的通道处理器
     ChannelHandler getChannelHandler();
 
     /**
@@ -49,6 +53,7 @@ public interface Endpoint {
      *
      * @return local address.
      */
+    // 获得该端的本地地址
     InetSocketAddress getLocalAddress();
 
     /**
@@ -57,6 +62,7 @@ public interface Endpoint {
      * @param message
      * @throws RemotingException
      */
+    // 发送消息
     void send(Object message) throws RemotingException;
 
     /**
@@ -65,18 +71,22 @@ public interface Endpoint {
      * @param message
      * @param sent    already sent to socket?
      */
+    // 发送消息，sent是否已经发送的标记（多了一个sent的参数，为了区分是否是第一次发送消息）
     void send(Object message, boolean sent) throws RemotingException;
 
     /**
      * close the channel.
      */
+    // 关闭
     void close();
 
     /**
      * Graceful close the channel.
      */
+    // 优雅的关闭，也就是加入了等待时间
     void close(int timeout);
 
+    // 开始关闭
     void startClose();
 
     /**
@@ -84,6 +94,7 @@ public interface Endpoint {
      *
      * @return closed
      */
+    // 判断是否已经关闭
     boolean isClosed();
 
 }

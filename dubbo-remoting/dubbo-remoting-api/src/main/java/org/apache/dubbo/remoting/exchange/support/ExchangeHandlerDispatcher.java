@@ -30,12 +30,16 @@ import java.util.concurrent.CompletableFuture;
 /**
  * ExchangeHandlerDispatcher
  */
+//该类实现了ExchangeHandler接口， 是信息交换处理器调度器类，也就是对应不同的事件，选择不同的处理器去处理。
 public class ExchangeHandlerDispatcher implements ExchangeHandler {
 
+    //回复者调度器
     private final ReplierDispatcher replierDispatcher;
 
+    //通道处理器调度器
     private final ChannelHandlerDispatcher handlerDispatcher;
 
+    //Telnet 命令处理器
     private final TelnetHandler telnetHandler;
 
     public ExchangeHandlerDispatcher() {
@@ -82,6 +86,8 @@ public class ExchangeHandlerDispatcher implements ExchangeHandler {
         return this;
     }
 
+    //如果事件是跟哪种处理器有关的，就调用哪种处理器来处理
+    //回复请求结果需要回复者调度器来处理，连接需要通道处理器调度器来处理，telnet消息需要Telnet命令处理器来处理
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public CompletableFuture<Object> reply(ExchangeChannel channel, Object request) throws RemotingException {

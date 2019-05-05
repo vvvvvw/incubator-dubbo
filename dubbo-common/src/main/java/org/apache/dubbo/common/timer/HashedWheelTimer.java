@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A {@link Timer} optimized for approximated I/O timeout scheduling.
+ * 针对近似的I / O超时调度进行了优化的Timer
  *
  * <h3>Tick Duration</h3>
  * <p>
@@ -145,7 +146,7 @@ public class HashedWheelTimer implements Timer {
      *
      * @param tickDuration  the duration between tick
      * @param unit          the time unit of the {@code tickDuration}
-     * @param ticksPerWheel the size of the wheel
+     * @param ticksPerWheel the size of the wheel 转一圈的的总 tick 数
      * @throws NullPointerException     if {@code unit} is {@code null}
      * @throws IllegalArgumentException if either of {@code tickDuration} and {@code ticksPerWheel} is &lt;= 0
      */

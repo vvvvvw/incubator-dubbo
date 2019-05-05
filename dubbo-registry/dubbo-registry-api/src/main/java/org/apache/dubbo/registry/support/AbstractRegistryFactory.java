@@ -38,12 +38,15 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public abstract class AbstractRegistryFactory implements RegistryFactory {
 
+    // 日志记录
     // Log output
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRegistryFactory.class);
 
+    // 锁，对REGISTRIES访问对竞争控制
     // The lock for the acquisition process of the registry
     private static final ReentrantLock LOCK = new ReentrantLock();
 
+    // Registry 集合
     // Registry Collection Map<RegistryAddress, Registry>
     private static final Map<String, Registry> REGISTRIES = new HashMap<>();
 
@@ -59,21 +62,25 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     /**
      * Close all created registries
      */
+    // 销毁所有的Registry对象，并且清除内存缓存，逻辑比较简单，关键就是对REGISTRIES进行同步的操作。
     // TODO: 2017/8/30 to move somewhere else better
     public static void destroyAll() {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Close all registries " + getRegistries());
         }
         // Lock up the registry shutdown process
+        // 获得锁
         LOCK.lock();
         try {
             for (Registry registry : getRegistries()) {
                 try {
+                    // 销毁
                     registry.destroy();
                 } catch (Throwable e) {
                     LOGGER.error(e.getMessage(), e);
                 }
             }
+            // 清空缓存
             REGISTRIES.clear();
         } finally {
             // Release the lock
@@ -83,24 +90,29 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
 
     @Override
     public Registry getRegistry(URL url) {
+        // 修改url
         url = URLBuilder.from(url)
                 .setPath(RegistryService.class.getName())
                 .addParameter(Constants.INTERFACE_KEY, RegistryService.class.getName())
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY)
                 .build();
+        // 计算key值
         String key = url.toServiceStringWithoutResolving();
         // Lock the registry access process to ensure a single instance of the registry
+        // 获得锁
         LOCK.lock();
         try {
             Registry registry = REGISTRIES.get(key);
             if (registry != null) {
                 return registry;
             }
+            // 创建Registry对象
             //create registry by spi/ioc
             registry = createRegistry(url);
             if (registry == null) {
                 throw new IllegalStateException("Can not create registry " + url);
             }
+            // 添加到缓存
             REGISTRIES.put(key, registry);
             return registry;
         } finally {

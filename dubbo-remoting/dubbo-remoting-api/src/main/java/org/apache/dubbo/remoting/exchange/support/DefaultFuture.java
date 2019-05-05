@@ -44,12 +44,15 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * DefaultFuture.
  */
+//实现了ResponseFuture接口，其中封装了处理响应的逻辑。
 public class DefaultFuture implements ResponseFuture {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
 
+    //通道集合
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
 
+    //Future集合，key为请求编号
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
     public static final Timer TIME_OUT_TIMER = new HashedWheelTimer(
@@ -57,23 +60,35 @@ public class DefaultFuture implements ResponseFuture {
             30,
             TimeUnit.MILLISECONDS);
 
+    //请求编号
     // invoke id.
     private final long id;
+    //通道
     private final Channel channel;
+    //请求
     private final Request request;
+    //超时
     private final int timeout;
+    //锁
     private final Lock lock = new ReentrantLock();
+    //完成情况，控制多线程的休眠与唤醒
     private final Condition done = lock.newCondition();
+    //创建开始时间
     private final long start = System.currentTimeMillis();
+    //存储请求发送时间
     private volatile long sent;
+    //响应
     private volatile Response response;
+    //回调
     private volatile ResponseCallback callback;
 
     private DefaultFuture(Channel channel, Request request, int timeout) {
         this.channel = channel;
         this.request = request;
+        // 设置请求编号
         this.id = request.getId();
         this.timeout = timeout > 0 ? timeout : channel.getUrl().getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
+        // put into waiting map.，加入到等待集合中
         // put into waiting map.
         FUTURES.put(id, this);
         CHANNELS.put(id, channel);
@@ -125,27 +140,36 @@ public class DefaultFuture implements ResponseFuture {
      *
      * @param channel channel to close
      */
+    //关闭不活跃的通道，并且返回请求未完成。也就是关闭指定channel的请求，返回的是请求未完成。
     public static void closeChannel(Channel channel) {
+        // 遍历通道集合
         for (Map.Entry<Long, Channel> entry : CHANNELS.entrySet()) {
             if (channel.equals(entry.getValue())) {
+                // 通过请求id获得future
                 DefaultFuture future = getFuture(entry.getKey());
                 if (future != null && !future.isDone()) {
+                    // 创建一个关闭通道的响应
                     Response disconnectResponse = new Response(future.getId());
                     disconnectResponse.setStatus(Response.CHANNEL_INACTIVE);
                     disconnectResponse.setErrorMessage("Channel " +
                             channel +
                             " is inactive. Directly return the unFinished request : " +
                             future.getRequest());
+                    // 接收该关闭通道并且请求未完成的响应
                     DefaultFuture.received(channel, disconnectResponse);
                 }
             }
         }
     }
 
+    //接收响应，也就是某个请求得到了响应，那么代表这次请求任务完成，所有需
+    // 要把future从集合中移除。具体的接收响应结果在doReceived方法中实现
     public static void received(Channel channel, Response response) {
         try {
+            // future集合中移除该请求的future，（响应id和请求id一一对应的）
             DefaultFuture future = FUTURES.remove(response.getId());
             if (future != null) {
+                // 接收响应结果
                 future.doReceived(response);
             } else {
                 logger.warn("The timeout response finally returned at "
@@ -155,6 +179,7 @@ public class DefaultFuture implements ResponseFuture {
                         + " -> " + channel.getRemoteAddress()));
             }
         } finally {
+            // 通道集合移除该请求对应的通道，代表着这一次请求结束
             CHANNELS.remove(response.getId());
         }
     }
@@ -164,17 +189,28 @@ public class DefaultFuture implements ResponseFuture {
         return get(timeout);
     }
 
+    /*
+    实现了ResponseFuture定义的方法，是获得该future对应的请求对应的响应结果，
+    其实future、请求、响应都是一一对应的。其中如果还没得到响应，
+    则会线程阻塞等待，等到有响应结果或者超时，才返回。
+     */
     @Override
     public Object get(int timeout) throws RemotingException {
+        // 超时时间默认为1s
         if (timeout <= 0) {
             timeout = Constants.DEFAULT_TIMEOUT;
         }
+        // 如果请求没有完成，也就是还没有响应返回
         if (!isDone()) {
             long start = System.currentTimeMillis();
+            // 获得锁
             lock.lock();
             try {
+                // 轮询 等待请求是否完成
                 while (!isDone()) {
+                    // 线程阻塞等待
                     done.await(timeout, TimeUnit.MILLISECONDS);
+                    // 如果请求完成或者超时，则结束
                     if (isDone() || System.currentTimeMillis() - start > timeout) {
                         break;
                     }
@@ -182,19 +218,31 @@ public class DefaultFuture implements ResponseFuture {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {
+                // 释放锁
                 lock.unlock();
             }
+            // 如果没有收到响应，则抛出超时的异常
             if (!isDone()) {
                 throw new TimeoutException(sent > 0, channel, getTimeoutMessage(false));
             }
         }
+        // 返回响应
         return returnFromResponse();
     }
 
+    /*
+    取消一个请求，可以直接关闭一个请求，也就是值创建一个响应来回应该请求，
+    把response值设置到该请求对于到future中，做到了中断请求的作用。
+    该方法跟closeChannel的区别是closeChannel中对response的状态
+    设置了CHANNEL_INACTIVE，而cancel方法是中途被主动取消的，
+    虽然有response值，但是并没有一个响应状态。
+     */
     public void cancel() {
+        // 创建一个取消请求的响应
         Response errorResult = new Response(id);
         errorResult.setErrorMessage("request future has been canceled.");
         response = errorResult;
+        // 从集合中删除该请求
         FUTURES.remove(id);
         CHANNELS.remove(id);
     }
@@ -204,12 +252,14 @@ public class DefaultFuture implements ResponseFuture {
         return response != null;
     }
 
+    //当接收到响应后，会把等待的线程唤醒，然后执行回调来处理该响应结果
     @Override
     public void setCallback(ResponseCallback callback) {
         if (isDone()) {
             invokeCallback(callback);
         } else {
             boolean isdone = false;
+            //锁住，防止在设置的间隔内响应过来了
             lock.lock();
             try {
                 if (!isDone()) {
@@ -221,11 +271,13 @@ public class DefaultFuture implements ResponseFuture {
                 lock.unlock();
             }
             if (isdone) {
+                // 执行回调
                 invokeCallback(callback);
             }
         }
     }
 
+    //定时任务检查请求是否超时
     private static class TimeoutCheckTask implements TimerTask {
 
         private DefaultFuture future;
@@ -236,20 +288,33 @@ public class DefaultFuture implements ResponseFuture {
 
         @Override
         public void run(Timeout timeout) {
+            // 已经完成，跳过扫描
             if (future == null || future.isDone()) {
                 return;
             }
+            // 超时
+            // 创建一个超时的响应
             // create exception response.
             Response timeoutResponse = new Response(future.getId());
             // set timeout status.
+            // FIXME: 这个send是什么时候设置的？不一定send服务端就一定能收到把？  by 15258 2019/4/30 13:54  by 15258 2019/5/5 13:56
+            //设置超时状态，是服务端侧超时还是客户端侧超时
             timeoutResponse.setStatus(future.isSent() ? Response.SERVER_TIMEOUT : Response.CLIENT_TIMEOUT);
+            // 设置错误信息
             timeoutResponse.setErrorMessage(future.getTimeoutMessage(true));
+            //接收创建的超时响应
             // handle response.
             DefaultFuture.received(future.getChannel(), timeoutResponse);
 
         }
     }
 
+    /*
+    执行回调来处理响应结果。分为了三种情况：
+    响应成功，那么执行完成后的逻辑。
+    超时，会按照超时异常来处理
+    其他，按照RuntimeException异常来处理
+     */
     private void invokeCallback(ResponseCallback c) {
         ResponseCallback callbackCopy = c;
         if (callbackCopy == null) {
@@ -260,19 +325,24 @@ public class DefaultFuture implements ResponseFuture {
             throw new IllegalStateException("response cannot be null. url:" + channel.getUrl());
         }
 
+        // 如果响应成功，返回码是20
         if (res.getStatus() == Response.OK) {
             try {
+                // 使用响应结果执行 完成 后的逻辑
                 callbackCopy.done(res.getResult());
             } catch (Exception e) {
                 logger.error("callback invoke error .result:" + res.getResult() + ",url:" + channel.getUrl(), e);
             }
+            //超时，回调处理成超时异常
         } else if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
             try {
                 TimeoutException te = new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage());
+                // 回调处理异常
                 callbackCopy.caught(te);
             } catch (Exception e) {
                 logger.error("callback invoke error ,url:" + channel.getUrl(), e);
             }
+            // 其他情况处理成RemotingException异常
         } else {
             try {
                 RuntimeException re = new RuntimeException(res.getErrorMessage());
@@ -288,12 +358,15 @@ public class DefaultFuture implements ResponseFuture {
         if (res == null) {
             throw new IllegalStateException("response cannot be null");
         }
+        // 如果正常返回，则返回响应结果
         if (res.getStatus() == Response.OK) {
             return res.getResult();
         }
+        // 如果超时，则抛出超时异常
         if (res.getStatus() == Response.CLIENT_TIMEOUT || res.getStatus() == Response.SERVER_TIMEOUT) {
             throw new TimeoutException(res.getStatus() == Response.SERVER_TIMEOUT, channel, res.getErrorMessage());
         }
+        // 其他 抛出RemotingException异常
         throw new RemotingException(channel, res.getErrorMessage());
     }
 
@@ -326,18 +399,28 @@ public class DefaultFuture implements ResponseFuture {
     }
 
     private void doReceived(Response res) {
+        // 获得锁
         lock.lock();
         try {
+            // 设置响应
             response = res;
+            // 唤醒等待
             done.signalAll();
         } finally {
+            // 释放锁
             lock.unlock();
         }
         if (callback != null) {
+            // 执行回调
             invokeCallback(callback);
         }
     }
 
+    /**
+     * 是否是被超时线程发现超时的
+     * @param scan
+     * @return
+     */
     private String getTimeoutMessage(boolean scan) {
         long nowTimestamp = System.currentTimeMillis();
         return (sent > 0 ? "Waiting server-side response timeout" : "Sending request timeout in client-side")

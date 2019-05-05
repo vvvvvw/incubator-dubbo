@@ -27,12 +27,16 @@ import org.apache.dubbo.remoting.exchange.Request;
 import org.apache.dubbo.remoting.exchange.Response;
 import org.apache.dubbo.remoting.transport.AbstractChannelHandlerDelegate;
 
+//该类继承了AbstractChannelHandlerDelegate类，是心跳处理器。是用来处理心跳事件的，也接收消息上增加了对心跳消息的处理
+//在handler处理消息上增加了处理心跳消息的功能，做到了功能增强。
 public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
 
     private static final Logger logger = LoggerFactory.getLogger(HeartbeatHandler.class);
 
+    //该通道最近一次读取的时间
     public static final String KEY_READ_TIMESTAMP = "READ_TIMESTAMP";
 
+    // 最后一次发送消息的时间戳
     public static final String KEY_WRITE_TIMESTAMP = "WRITE_TIMESTAMP";
 
     public HeartbeatHandler(ChannelHandler handler) {
@@ -59,14 +63,21 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
         handler.sent(channel, message);
     }
 
+    //// 设置接收时间的时间戳属性值
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
+        // 设置接收时间的时间戳属性值
         setReadTimestamp(channel);
+        // 如果是心跳请求
         if (isHeartbeatRequest(message)) {
             Request req = (Request) message;
+            // 如果需要响应
             if (req.isTwoWay()) {
+                // 创建一个响应
                 Response res = new Response(req.getId(), req.getVersion());
+                // 设置为心跳事件的响应
                 res.setEvent(Response.HEARTBEAT_EVENT);
+                // 发送消息，也就是返回响应
                 channel.send(res);
                 if (logger.isInfoEnabled()) {
                     int heartbeat = channel.getUrl().getParameter(Constants.HEARTBEAT_KEY, 0);
@@ -79,6 +90,7 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
             }
             return;
         }
+        // 如果是心跳响应，则直接return
         if (isHeartbeatResponse(message)) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Receive heartbeat response in thread " + Thread.currentThread().getName());
