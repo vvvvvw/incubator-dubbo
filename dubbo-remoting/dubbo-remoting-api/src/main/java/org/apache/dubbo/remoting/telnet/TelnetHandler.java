@@ -23,6 +23,8 @@ import org.apache.dubbo.remoting.RemotingException;
 /**
  * TelnetHandler
  */
+//处理对应的telnet命令,该接口上telnet命令处理器接口，是一个可扩展接口。
+// 它定义了一个方法，就是处理相关的telnet命令。
 @SPI
 public interface TelnetHandler {
 

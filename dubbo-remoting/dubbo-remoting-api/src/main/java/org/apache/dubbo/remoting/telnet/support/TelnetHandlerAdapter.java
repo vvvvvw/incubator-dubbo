@@ -25,22 +25,31 @@ import org.apache.dubbo.remoting.RemotingException;
 import org.apache.dubbo.remoting.telnet.TelnetHandler;
 import org.apache.dubbo.remoting.transport.ChannelHandlerAdapter;
 
+//该类继承了ChannelHandlerAdapter，实现了TelnetHandler接口，是TelnetHandler的适配器类，负责在接收到HeaderExchangeHandler
+// 发来的telnet命令后分发给对应的TelnetHandler实现类去实现，并且返回命令结果
 public class TelnetHandlerAdapter extends ChannelHandlerAdapter implements TelnetHandler {
 
     private final ExtensionLoader<TelnetHandler> extensionLoader = ExtensionLoader.getExtensionLoader(TelnetHandler.class);
 
+    //根据对应的命令去让对应的实现类产生命令结果
     @Override
     public String telnet(Channel channel, String message) throws RemotingException {
+        // 获得提示键配置，用于nc获取信息时不显示提示符
         String prompt = channel.getUrl().getParameterAndDecoded(Constants.PROMPT_KEY, Constants.DEFAULT_PROMPT);
+        //是否关闭telnet提示语
         boolean noprompt = message.contains("--no-prompt");
         message = message.replace("--no-prompt", "");
         StringBuilder buf = new StringBuilder();
+        // 删除头尾空白符的字符串
         message = message.trim();
         String command;
+        // 获得命令
         if (message.length() > 0) {
             int i = message.indexOf(' ');
             if (i > 0) {
+                // 获得命令（message的第一个参数）
                 command = message.substring(0, i).trim();
+                // 获得参数
                 message = message.substring(i + 1).trim();
             } else {
                 command = message;
@@ -50,13 +59,16 @@ public class TelnetHandlerAdapter extends ChannelHandlerAdapter implements Telne
             command = "";
         }
         if (command.length() > 0) {
+            // 如果有该命令的扩展实现类
             if (extensionLoader.hasExtension(command)) {
                 if (commandEnabled(channel.getUrl(), command)) {
                     try {
+                        // 执行相应命令的实现类的telnet
                         String result = extensionLoader.getExtension(command).telnet(channel, message);
                         if (result == null) {
                             return null;
                         }
+                        // 返回结果
                         buf.append(result);
                     } catch (Throwable t) {
                         buf.append(t.getMessage());
@@ -74,12 +86,19 @@ public class TelnetHandlerAdapter extends ChannelHandlerAdapter implements Telne
         if (buf.length() > 0) {
             buf.append("\r\n");
         }
+        // 添加 telnet 提示语
         if (StringUtils.isNotEmpty(prompt) && !noprompt) {
             buf.append(prompt);
         }
         return buf.toString();
     }
 
+    /**
+     * 是否支持该telnet命令
+     * @param url
+     * @param command
+     * @return
+     */
     private boolean commandEnabled(URL url, String command) {
         String supportCommands = url.getParameter(Constants.TELNET);
         if (StringUtils.isEmpty(supportCommands)) {

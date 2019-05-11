@@ -26,6 +26,7 @@ import java.util.Map;
  */
 public class StatusUtils {
 
+    //返回总体资源状态，error->warn->nomal，并且msg包含所有warn和error
     public static Status getSummaryStatus(Map<String, Status> statuses) {
         Level level = Level.OK;
         StringBuilder msg = new StringBuilder();

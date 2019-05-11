@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
 /**
  * Help
  */
+//帮助文档注解,在每个命令的实现类上都加上了@Help注解，为了添加一些帮助文案。
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

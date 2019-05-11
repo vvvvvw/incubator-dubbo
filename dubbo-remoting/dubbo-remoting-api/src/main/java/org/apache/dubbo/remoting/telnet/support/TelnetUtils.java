@@ -22,6 +22,7 @@ import java.util.List;
 /**
  * TelnetUtils
  */
+//Telnet命令的工具类
 public class TelnetUtils {
 
     public static String toList(List<List<String>> table) {

@@ -390,6 +390,7 @@ public class Constants {
 
     public static final String METHODS_KEY = "methods";
 
+    //字符集
     public static final String CHARSET_KEY = "charset";
 
     //是否开启重连
@@ -813,6 +814,9 @@ public class Constants {
 
     public static final String[] DEFAULT_REGISTER_CONSUMER_KEYS = {APPLICATION_KEY, VERSION_KEY, GROUP_KEY, DUBBO_VERSION_KEY, RELEASE_KEY};
 
+    /**
+     * 支持的telnet命令
+     */
     public static final String TELNET = "telnet";
 
     /**

@@ -201,11 +201,15 @@ import java.nio.ByteBuffer;
  *
  *
  */
+//该接口继承了Comparable接口，该接口是通道缓存接口，是字节容器，
+// 在netty中也有通道缓存的设计，也就是io.netty.buffer.ByteBuf，
+// 该接口的方法定义和设计跟ByteBuf几乎一样，连注释都一样
 public interface ChannelBuffer extends Comparable<ChannelBuffer> {
 
     /**
      * Returns the number of bytes (octets) this buffer can contain.
      */
+    //返回本buffer能够存储的字节数量
     int capacity();
 
     /**
@@ -234,6 +238,8 @@ public interface ChannelBuffer extends Comparable<ChannelBuffer> {
      * method does not modify {@code readerIndex} or {@code writerIndex} of this
      * buffer.
      */
+    //返回本buffer数据的子集的复制。修改返回的buffer的内容或者本buffer不会影响到对方。
+    //本方法不会修改 本buffer的readerIndex和writerIndex
     ChannelBuffer copy(int index, int length);
 
     /**
@@ -256,7 +262,10 @@ public interface ChannelBuffer extends Comparable<ChannelBuffer> {
      * bytes} becomes equal to or greater than the specified value. The
      * expansion involves the reallocation of the internal buffer and
      * consequently memory copy.</li> </ul>
-     *
+     * 确保可用于写的字节数量大于等于指定值，如果有足够空间，则方法直接返回，
+     * 不用有任何副作用；如果没有足够空间，对于非动态的buffer，则抛出IndexOutOfBoundsException，
+     * 对于动态的buffer，扩展动态buffer的大小大于等于指定值，扩展会引起内部buffer的重新
+     * 分配和内存拷贝
      * @param writableBytes the expected minimum number of writable bytes
      * @throws IndexOutOfBoundsException if {@linkplain #writableBytes() the
      *                                   writable bytes} of this buffer is less

@@ -104,7 +104,7 @@ public class Response {
     //状态
     private byte mStatus = OK;
 
-    //是否是事件
+    //是否是事件 心跳也算是事件
     private boolean mEvent = false;
 
     //错误信息

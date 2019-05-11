@@ -25,11 +25,14 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 
+//该方法继承了AbstractChannelBuffer，该类中buffer是基于字节数组实现
+//在该类中包装了一个字节数组，把构造函数传入的字节数组传入到该属性中。
 public class HeapChannelBuffer extends AbstractChannelBuffer {
 
     /**
      * The underlying heap byte array that this buffer is wrapping.
      */
+    //此缓冲区包装的基础堆字节数组。
     protected final byte[] array;
 
     /**
@@ -37,6 +40,7 @@ public class HeapChannelBuffer extends AbstractChannelBuffer {
      *
      * @param length the length of the new byte array
      */
+    //使用新分配的字节数组创建新的堆缓冲区。
     public HeapChannelBuffer(int length) {
         this(new byte[length], 0, 0);
     }
@@ -46,6 +50,7 @@ public class HeapChannelBuffer extends AbstractChannelBuffer {
      *
      * @param array the byte array to wrap
      */
+    //使用现有字节数组创建新的堆缓冲区。
     public HeapChannelBuffer(byte[] array) {
         this(array, 0, array.length);
     }
@@ -57,6 +62,7 @@ public class HeapChannelBuffer extends AbstractChannelBuffer {
      * @param readerIndex the initial reader index of this buffer
      * @param writerIndex the initial writer index of this buffer
      */
+    // 使用现有字节数组创建新的堆缓冲区。
     protected HeapChannelBuffer(byte[] array, int readerIndex, int writerIndex) {
         if (array == null) {
             throw new NullPointerException("array");

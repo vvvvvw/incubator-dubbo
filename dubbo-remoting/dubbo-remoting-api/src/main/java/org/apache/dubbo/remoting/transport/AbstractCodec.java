@@ -36,9 +36,9 @@ public abstract class AbstractCodec implements Codec2 {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractCodec.class);
 
-    //检验消息长度
+    //检验消息长度(请求或者响应)
     protected static void checkPayload(Channel channel, long size) throws IOException {
-        // 默认长度
+        // 默认长度(请求或者响应)
         int payload = Constants.DEFAULT_PAYLOAD;
         if (channel != null && channel.getUrl() != null) {
             // 优先从url中获得消息长度配置，如果没有则用默认长度

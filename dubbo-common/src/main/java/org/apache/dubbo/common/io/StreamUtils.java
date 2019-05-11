@@ -223,6 +223,7 @@ public class StreamUtils {
         return markSupportedInputStream(is, 1024);
     }
 
+    //跳过is中所有可用字节流
     public static void skipUnusedStream(InputStream is) throws IOException {
         if (is.available() > 0) {
             is.skip(is.available());
