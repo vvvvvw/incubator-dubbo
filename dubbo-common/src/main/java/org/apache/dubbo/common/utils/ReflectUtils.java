@@ -120,6 +120,7 @@ public final class ReflectUtils {
 
     private static final ConcurrentMap<String, Class<?>> NAME_CLASS_CACHE = new ConcurrentHashMap<String, Class<?>>();
 
+    //Map<classname+methodname+参数类名，方法名>
     private static final ConcurrentMap<String, Method> Signature_METHODS_CACHE = new ConcurrentHashMap<String, Method>();
 
     private ReflectUtils() {
@@ -227,6 +228,7 @@ public final class ReflectUtils {
      * @param c class.
      * @return name.
      */
+    //获取类名，数组在后面加 []
     public static String getName(Class<?> c) {
         if (c.isArray()) {
             StringBuilder sb = new StringBuilder();
@@ -677,6 +679,7 @@ public final class ReflectUtils {
      * @param name name.
      * @return Class instance.
      */
+    //name转化为类名，包括数组
     private static Class<?> name2class(ClassLoader cl, String name) throws ClassNotFoundException {
         int c = 0, index = name.indexOf('[');
         if (index > 0) {
@@ -851,6 +854,7 @@ public final class ReflectUtils {
      * @throws ClassNotFoundException
      * @throws IllegalStateException  when multiple methods are found (overridden method when parameter info is not provided)
      */
+    //找到 具体实现的方法
     public static Method findMethodByMethodSignature(Class<?> clazz, String methodName, String[] parameterTypes)
             throws NoSuchMethodException, ClassNotFoundException {
         String signature = clazz.getName() + "." + methodName;
@@ -861,6 +865,7 @@ public final class ReflectUtils {
         if (method != null) {
             return method;
         }
+        //如果参数为空，根据方法名找
         if (parameterTypes == null) {
             List<Method> finded = new ArrayList<Method>();
             for (Method m : clazz.getMethods()) {
@@ -871,6 +876,7 @@ public final class ReflectUtils {
             if (finded.isEmpty()) {
                 throw new NoSuchMethodException("No such method " + methodName + " in class " + clazz);
             }
+            //找到的数量超过一个，抛出异常
             if (finded.size() > 1) {
                 String msg = String.format("Not unique method for method name(%s) in class(%s), find %d methods.",
                         methodName, clazz.getName(), finded.size());
@@ -882,6 +888,7 @@ public final class ReflectUtils {
             for (int i = 0; i < parameterTypes.length; i++) {
                 types[i] = ReflectUtils.name2class(parameterTypes[i]);
             }
+            //根据方法名和参数类型查找
             method = clazz.getMethod(methodName, types);
 
         }
@@ -1012,6 +1019,11 @@ public final class ReflectUtils {
         }
     }
 
+    /**
+     * 是否是set方法
+     * @param method
+     * @return
+     */
     public static boolean isBeanPropertyReadMethod(Method method) {
         return method != null
                 && Modifier.isPublic(method.getModifiers())
@@ -1023,6 +1035,11 @@ public final class ReflectUtils {
                 || (method.getName().startsWith("is") && method.getName().length() > 2));
     }
 
+    /**
+     * 根据set方法获取属性名
+     * @param method
+     * @return
+     */
     public static String getPropertyNameFromBeanReadMethod(Method method) {
         if (isBeanPropertyReadMethod(method)) {
             if (method.getName().startsWith("get")) {
@@ -1055,6 +1072,11 @@ public final class ReflectUtils {
         return null;
     }
 
+    /**
+     * 是否该field是 publish，非static、非final、非合成的类
+     * @param field
+     * @return
+     */
     public static boolean isPublicInstanceField(Field field) {
         return Modifier.isPublic(field.getModifiers())
                 && !Modifier.isStatic(field.getModifiers())
@@ -1067,6 +1089,7 @@ public final class ReflectUtils {
         for (; cl != null; cl = cl.getSuperclass()) {
             Field[] fields = cl.getDeclaredFields();
             for (Field field : fields) {
+                //如果是 transient或者 static，跳过
                 if (Modifier.isTransient(field.getModifiers())
                         || Modifier.isStatic(field.getModifiers())) {
                     continue;
@@ -1081,6 +1104,11 @@ public final class ReflectUtils {
         return properties;
     }
 
+    /**
+     * 获取class中的所有set方法
+     * @param cl
+     * @return
+     */
     public static Map<String, Method> getBeanPropertyReadMethods(Class cl) {
         Map<String, Method> properties = new HashMap<String, Method>();
         for (; cl != null; cl = cl.getSuperclass()) {

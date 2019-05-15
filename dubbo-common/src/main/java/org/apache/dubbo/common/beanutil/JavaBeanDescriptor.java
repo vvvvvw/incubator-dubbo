@@ -55,10 +55,20 @@ public final class JavaBeanDescriptor implements Serializable, Iterable<Map.Entr
      */
     private static final int TYPE_MIN = TYPE_CLASS;
 
+    //本JavaBeanDescriptor 代表的对象的类名
     private String className;
 
+    //属于哪一种java对象
     private int type;
 
+    // Map<属性名，value>
+    //Enum: 属性名 -> name
+    //原生类型: 属性名->value
+    //类名： 属性 -> name
+    //数组： 数组的索引 -> 元素的JavaBeanDescriptor
+    //集合： 元素的索引 -> 元素的JavaBeanDescriptor
+    //Map: key的JavaBeanDescriptor - > value的JavaBeanDescriptor
+    //对象： 属性名字 -> 值的JavaBeanDescriptor
     private Map<Object, Object> properties = new LinkedHashMap<Object, Object>();
 
     public JavaBeanDescriptor() {

@@ -27,6 +27,7 @@ import java.util.Map;
  * @see org.apache.dubbo.rpc.Invoker#invoke(Invocation)
  * @see org.apache.dubbo.rpc.RpcResult
  */
+//该接口是实体域执行invoke的结果接口，里面定义了获得结果异常以及附加值等方法
 public interface Result extends Serializable {
 
     /**
@@ -60,7 +61,7 @@ public interface Result extends Serializable {
      * return getValue();
      * }
      * </code>
-     *
+     * 有异常抛出异常，否则返回结果
      * @return result.
      * @throws if has exception throw it.
      */

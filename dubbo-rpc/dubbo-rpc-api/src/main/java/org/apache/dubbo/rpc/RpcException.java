@@ -24,13 +24,20 @@ package org.apache.dubbo.rpc;
  * @see org.apache.dubbo.rpc.Invoker#invoke(Invocation)
  * @since 1.0
  */
+//该类是rpc调用抛出的异常类，其中封装了五种通用的错误码。
 public /**final**/ class RpcException extends RuntimeException {
 
+    //未知异常
     public static final int UNKNOWN_EXCEPTION = 0;
+    //网络异常
     public static final int NETWORK_EXCEPTION = 1;
+    //超时异常
     public static final int TIMEOUT_EXCEPTION = 2;
+    //基础异常
     public static final int BIZ_EXCEPTION = 3;
+    //禁止访问异常
     public static final int FORBIDDEN_EXCEPTION = 4;
+    //序列化异常
     public static final int SERIALIZATION_EXCEPTION = 5;
     public static final int NO_INVOKER_AVAILABLE_AFTER_FILTER = 6;
     private static final long serialVersionUID = 7815426752583648734L;

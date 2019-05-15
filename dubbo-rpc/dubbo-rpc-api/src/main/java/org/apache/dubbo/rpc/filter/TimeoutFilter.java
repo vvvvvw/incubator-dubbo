@@ -32,6 +32,7 @@ import java.util.Arrays;
 /**
  * Log any invocation timeout, but don't stop server from running
  */
+//当服务调用超时的时候，记录告警日志。
 @Activate(group = Constants.PROVIDER)
 public class TimeoutFilter implements Filter {
 
@@ -42,7 +43,9 @@ public class TimeoutFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         if (invocation.getAttachments() != null) {
+            // 获得开始时间
             long start = System.currentTimeMillis();
+
             invocation.getAttachments().put(TIMEOUT_FILTER_START_TIME, String.valueOf(start));
         } else {
             if (invocation instanceof RpcInvocation) {
@@ -51,17 +54,21 @@ public class TimeoutFilter implements Filter {
                 invc.setAttachment(TIMEOUT_FILTER_START_TIME, String.valueOf(start));
             }
         }
+        // 调用下一个调用链
         return invoker.invoke(invocation);
     }
 
     @Override
     public Result onResponse(Result result, Invoker<?> invoker, Invocation invocation) {
+        //获取开始调用时间
         String startAttach = invocation.getAttachment(TIMEOUT_FILTER_START_TIME);
         if (startAttach != null) {
+            // 获得调用使用的时间
             long elapsed = System.currentTimeMillis() - Long.valueOf(startAttach);
             if (invoker.getUrl() != null
                     && elapsed > invoker.getUrl().getMethodParameter(invocation.getMethodName(),
                     "timeout", Integer.MAX_VALUE)) {
+                // 如果服务调用超时，则打印告警日志
                 if (logger.isWarnEnabled()) {
                     logger.warn("invoke time out. method: " + invocation.getMethodName()
                             + " arguments: " + Arrays.toString(invocation.getArguments()) + " , url is "

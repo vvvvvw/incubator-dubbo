@@ -66,6 +66,12 @@ public final class JavaBeanSerializeUtil {
         return result;
     }
 
+    /**
+     * 是否java bean的方式序列化对象
+     * @param obj
+     * @param accessor
+     * @return
+     */
     public static JavaBeanDescriptor serialize(Object obj, JavaBeanAccessor accessor) {
         if (obj == null) {
             return null;
@@ -78,6 +84,11 @@ public final class JavaBeanSerializeUtil {
         return result;
     }
 
+    /**
+     * 根据类型获取不同的JavaBeanDescriptor
+     * @param cl
+     * @return
+     */
     private static JavaBeanDescriptor createDescriptorForSerialize(Class<?> cl) {
         if (cl.isEnum()) {
             return new JavaBeanDescriptor(cl.getName(), JavaBeanDescriptor.TYPE_ENUM);
@@ -96,6 +107,13 @@ public final class JavaBeanSerializeUtil {
         }
     }
 
+    /**
+     * 是否java bean的方式序列化对象
+     * @param obj 对象
+     * @param accessor 对象内字段的访问
+     * @param cache map记录已经解析的字段，这样碰到同一个对象可以直接从map中获取
+     * @return
+     */
     private static JavaBeanDescriptor createDescriptorIfAbsent(Object obj, JavaBeanAccessor accessor, IdentityHashMap<Object, JavaBeanDescriptor> cache) {
         if (cache.containsKey(obj)) {
             return cache.get(obj);
@@ -150,6 +168,7 @@ public final class JavaBeanSerializeUtil {
                 descriptor.setProperty(keyDescriptor, valueDescriptor);
             });// ~ end of loop map
         } else {
+            //如果使用java bean的方法名
             if (JavaBeanAccessor.isAccessByMethod(accessor)) {
                 Map<String, Method> methods = ReflectUtils.getBeanPropertyReadMethods(obj.getClass());
                 for (Map.Entry<String, Method> entry : methods.entrySet()) {
@@ -166,6 +185,7 @@ public final class JavaBeanSerializeUtil {
                 } // ~ end of loop method map
             } // ~ end of if (JavaBeanAccessor.isAccessByMethod(accessor))
 
+            //如果使用java bean的字段
             if (JavaBeanAccessor.isAccessByField(accessor)) {
                 Map<String, Field> fields = ReflectUtils.getBeanPropertyFields(obj.getClass());
                 for (Map.Entry<String, Field> entry : fields.entrySet()) {
@@ -191,6 +211,7 @@ public final class JavaBeanSerializeUtil {
     public static Object deserialize(JavaBeanDescriptor beanDescriptor) {
         Object result = deserialize(
                 beanDescriptor,
+                //使用当前线程的classloader
                 Thread.currentThread().getContextClassLoader());
         return result;
     }

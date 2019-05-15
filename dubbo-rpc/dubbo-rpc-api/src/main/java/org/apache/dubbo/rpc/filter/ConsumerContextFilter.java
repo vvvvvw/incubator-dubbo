@@ -34,25 +34,31 @@ import org.apache.dubbo.rpc.RpcInvocation;
  * @see org.apache.dubbo.rpc.Filter
  * @see RpcContext
  */
+//该过滤器做的是在当前的RpcContext中记录本地调用的一次状态信息。
 @Activate(group = Constants.CONSUMER, order = -10000)
 public class ConsumerContextFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 设置rpc上下文
         RpcContext.getContext()
                 .setInvoker(invoker)
                 .setInvocation(invocation)
                 .setLocalAddress(NetUtils.getLocalHost(), 0)
                 .setRemoteAddress(invoker.getUrl().getHost(),
                         invoker.getUrl().getPort());
+        // 如果该会话域是rpc会话域
         if (invocation instanceof RpcInvocation) {
+            // 设置实体域
             ((RpcInvocation) invocation).setInvoker(invoker);
         }
         try {
+            // todo 清理了服务端上下文？
             // TODO should we clear server context?
             RpcContext.removeServerContext();
             return invoker.invoke(invocation);
         } finally {
+            // todo 清理了attachment？
             // TODO removeContext? but we need to save future for RpcContext.getFuture() API. If clear attachments here, attachments will not available when postProcessResult is invoked.
             RpcContext.getContext().clearAttachments();
         }

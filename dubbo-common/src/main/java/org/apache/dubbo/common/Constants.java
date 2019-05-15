@@ -234,6 +234,9 @@ public class Constants {
 
     public static final String DIRECTORY_KEY = "directory";
 
+    /**
+     * 方法是否已经被废弃
+     */
     public static final String DEPRECATED_KEY = "deprecated";
 
     public static final String ANYHOST_KEY = "anyhost";
@@ -289,6 +292,7 @@ public class Constants {
 
     public static final String ALIVE_KEY = "alive";
 
+    //服务端，方法级别 限制同一个方法最大可并行执行请求数
     public static final String EXECUTES_KEY = "executes";
 
     public static final String BUFFER_KEY = "buffer";
@@ -304,8 +308,9 @@ public class Constants {
 
     public static final String EXPORTER_LISTENER_KEY = "exporter.listener";
 
+    //需要写入的日志文件名称
     public static final String ACCESS_LOG_KEY = "accesslog";
-
+    // 客户端 方法级别 限制同一个方法最大可并行执行请求数
     public static final String ACTIVES_KEY = "actives";
 
     public static final String CONNECTIONS_KEY = "connections";
@@ -342,6 +347,7 @@ public class Constants {
 
     public static final String CONNECT_TIMEOUT_KEY = "connect.timeout";
 
+    //超时时间
     public static final String TIMEOUT_KEY = "timeout";
 
     public static final String RETRIES_KEY = "retries";
@@ -438,6 +444,7 @@ public class Constants {
 
     public static final String CLASSIFIER_KEY = "classifier";
 
+    //服务版本号
     public static final String VERSION_KEY = "version";
 
     public static final String REVISION_KEY = "revision";
@@ -719,8 +726,10 @@ public class Constants {
 
     public static final String RELIABLE_PROTOCOL = "napoli";
 
+    //每个TPS_LIMIT间隔时间允许的 流量 -1表示不限制
     public static final String TPS_LIMIT_RATE_KEY = "tps";
 
+    //TPS_LIMIT间隔时间
     public static final String TPS_LIMIT_INTERVAL_KEY = "tps.interval";
 
     public static final long DEFAULT_TPS_LIMIT_INTERVAL = 60 * 1000;

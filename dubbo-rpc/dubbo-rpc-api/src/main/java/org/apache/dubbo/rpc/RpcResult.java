@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
  *
  * @serial Don't change the class name and properties.
  */
+//该类实现了Result接口，是rpc的结果实现类
 public class RpcResult extends AbstractResult {
 
     private static final long serialVersionUID = -6925924956850004727L;

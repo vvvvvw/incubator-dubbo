@@ -34,21 +34,28 @@ import java.util.Map;
  *
  * @see Filter
  */
+//// 如果服务调用超时，则打印告警日志
 @Activate(group = Constants.PROVIDER, value = Constants.TOKEN_KEY)
 public class TokenFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation inv)
             throws RpcException {
+        // 获得token值
         String token = invoker.getUrl().getParameter(Constants.TOKEN_KEY);
         if (ConfigUtils.isNotEmpty(token)) {
+            // 获得服务类型
             Class<?> serviceType = invoker.getInterface();
+            // 获得附加值
             Map<String, String> attachments = inv.getAttachments();
+            // 获取客户端token
             String remoteToken = attachments == null ? null : attachments.get(Constants.TOKEN_KEY);
+            // 如果令牌不一样，则抛出异常
             if (!token.equals(remoteToken)) {
                 throw new RpcException("Invalid token! Forbid invoke remote service " + serviceType + " method " + inv.getMethodName() + "() from consumer " + RpcContext.getContext().getRemoteHost() + " to provider " + RpcContext.getContext().getLocalHost());
             }
         }
+        // 调用下一个调用链
         return invoker.invoke(inv);
     }
 

@@ -40,6 +40,7 @@ import org.apache.dubbo.common.extension.SPI;
  * @see org.apache.dubbo.rpc.filter.TokenFilter
  * @see org.apache.dubbo.rpc.filter.TpsLimitFilter
  */
+//该接口是invoker调用时过滤器接口，其中就只有一个invoke方法。在该方法中对调用进行过滤
 @SPI
 public interface Filter {
 
@@ -52,7 +53,7 @@ public interface Filter {
      * // after filter
      * return result;
      * </code>
-     *
+     * 调用
      * @param invoker    service
      * @param invocation invocation.
      * @return invoke result.
@@ -63,7 +64,7 @@ public interface Filter {
 
     /**
      * Return processing result
-     *
+     * 响应返回
      * @param result     result
      * @param invoker    invoker
      * @param invocation invocation

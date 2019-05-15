@@ -46,6 +46,7 @@ public class ProtocolUtils {
         return buf.toString();
     }
 
+    // // 如果该值是nativejava或者bean或者true
     public static boolean isGeneric(String generic) {
         return generic != null
                 && !"".equals(generic)
@@ -59,11 +60,13 @@ public class ProtocolUtils {
                 && Constants.GENERIC_SERIALIZATION_DEFAULT.equalsIgnoreCase(generic);
     }
 
+    //nativejava序列化参数，在服务端这边通过nativejava反序列化参数成pojo对象。
     public static boolean isJavaGenericSerialization(String generic) {
         return isGeneric(generic)
                 && Constants.GENERIC_SERIALIZATION_NATIVE_JAVA.equalsIgnoreCase(generic);
     }
 
+    //使用javabean序列化参数，在服务端这边通过javabean反序列化参数成pojo对象。
     public static boolean isBeanGenericSerialization(String generic) {
         return isGeneric(generic) && Constants.GENERIC_SERIALIZATION_BEAN.equals(generic);
     }

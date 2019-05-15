@@ -28,14 +28,18 @@ import java.util.List;
 /**
  * ListenerExporter
  */
+//是服务暴露监听器包装类。用到了装饰模式，其中很多实现方法直接调用了exporter的方法。
 public class ListenerExporterWrapper<T> implements Exporter<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(ListenerExporterWrapper.class);
 
+    //服务暴露者
     private final Exporter<T> exporter;
 
+    //服务暴露监听者集合
     private final List<ExporterListener> listeners;
 
+    //该方法中对于每个服务暴露进行监听。
     public ListenerExporterWrapper(Exporter<T> exporter, List<ExporterListener> listeners) {
         if (exporter == null) {
             throw new IllegalArgumentException("exporter == null");
@@ -44,9 +48,11 @@ public class ListenerExporterWrapper<T> implements Exporter<T> {
         this.listeners = listeners;
         if (CollectionUtils.isNotEmpty(listeners)) {
             RuntimeException exception = null;
+            // 遍历服务暴露监听集合
             for (ExporterListener listener : listeners) {
                 if (listener != null) {
                     try {
+                        // 暴露服务监听
                         listener.exported(this);
                     } catch (RuntimeException t) {
                         logger.error(t.getMessage(), t);
@@ -68,13 +74,16 @@ public class ListenerExporterWrapper<T> implements Exporter<T> {
     @Override
     public void unexport() {
         try {
+            // 取消暴露
             exporter.unexport();
         } finally {
             if (CollectionUtils.isNotEmpty(listeners)) {
                 RuntimeException exception = null;
+                // 遍历监听集合
                 for (ExporterListener listener : listeners) {
                     if (listener != null) {
                         try {
+                            // 监听取消暴露
                             listener.unexported(this);
                         } catch (RuntimeException t) {
                             logger.error(t.getMessage(), t);

@@ -85,6 +85,13 @@ public class PojoUtils {
         return dests;
     }
 
+    /**
+     * 反序列化
+     * @param objs
+     * @param types
+     * @param gtypes
+     * @return
+     */
     public static Object[] realize(Object[] objs, Class<?>[] types, Type[] gtypes) {
         if (objs.length != types.length || objs.length != gtypes.length) {
             throw new IllegalArgumentException("args.length != types.length");
@@ -100,15 +107,23 @@ public class PojoUtils {
         return generalize(pojo, new IdentityHashMap<Object, Object>());
     }
 
+    //如果是枚举或者枚举数组，返回 枚举的name或者name数组
+    //原生或者包装类数组，返回 原来的对象
+    //类对象或者类对象数组，返回类名或者类名数组
+    //集合，返回list或者set，其中的每个对象还是调用generalize方法生成
+    //map ，key调用generalize方法生成：value调用generalize方法生成
+    //对象， Map  // class:pojo类名  使用方法提取： 属性名字: generalize方法生成的value 使用public字段提取： 属性名字: generalize方法生成的value
     @SuppressWarnings("unchecked")
     private static Object generalize(Object pojo, Map<Object, Object> history) {
         if (pojo == null) {
             return null;
         }
 
+        //如果是Enum，使用 枚举的name
         if (pojo instanceof Enum<?>) {
             return ((Enum<?>) pojo).name();
         }
+        //如果是Enum 数组，返回枚举的name数组
         if (pojo.getClass().isArray() && Enum.class.isAssignableFrom(pojo.getClass().getComponentType())) {
             int len = Array.getLength(pojo);
             String[] values = new String[len];
@@ -118,10 +133,12 @@ public class PojoUtils {
             return values;
         }
 
+        //如果是 原生类型或者包装类，返回原始值
         if (ReflectUtils.isPrimitives(pojo.getClass())) {
             return pojo;
         }
 
+        //如果是类对象，返回类名
         if (pojo instanceof Class) {
             return ((Class) pojo).getName();
         }
@@ -179,6 +196,7 @@ public class PojoUtils {
                 try {
                     Object fieldValue = field.get(pojo);
                     if (history.containsKey(pojo)) {
+                        // 如果已经解析的 pojo 中已经包含了该属性
                         Object pojoGeneralizedValue = history.get(pojo);
                         if (pojoGeneralizedValue instanceof Map
                                 && ((Map) pojoGeneralizedValue).containsKey(field.getName())) {

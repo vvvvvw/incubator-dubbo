@@ -25,10 +25,13 @@ import java.util.Map;
  *
  */
 public abstract class AbstractResult implements Result {
+    //附加值
     protected Map<String, String> attachments = new HashMap<String, String>();
 
+    //结果
     protected Object result;
 
+    //异常
     protected Throwable exception;
 
     @Override

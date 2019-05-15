@@ -23,12 +23,15 @@ import org.apache.dubbo.rpc.RpcException;
 /**
  * ExporterListenerAdapter
  */
+//该类是服务暴露监听器的适配类，没有做实际的操作。
 public abstract class ExporterListenerAdapter implements ExporterListener {
 
+    //暴露服务
     @Override
     public void exported(Exporter<?> exporter) throws RpcException {
     }
 
+    //取消暴露服务
     @Override
     public void unexported(Exporter<?> exporter) throws RpcException {
     }

@@ -34,14 +34,17 @@ import org.apache.dubbo.rpc.filter.tps.TPSLimiter;
  * if invocation count exceed the configured <b>tps</b> value (default is -1 which means unlimited) then invocation will get
  * RpcException.
  * */
+//对TPS限流
 @Activate(group = Constants.PROVIDER, value = Constants.TPS_LIMIT_RATE_KEY)
 public class TpsLimitFilter implements Filter {
 
+    //TPS 限制器对象
     private final TPSLimiter tpsLimiter = new DefaultTPSLimiter();
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
 
+        //// 如果限流器不允许，则抛出异常
         if (!tpsLimiter.isAllowable(invoker.getUrl(), invocation)) {
             throw new RpcException(
                     "Failed to invoke service " +
@@ -51,6 +54,7 @@ public class TpsLimitFilter implements Filter {
                             " because exceed max service tps.");
         }
 
+        // 调用下一个调用链
         return invoker.invoke(invocation);
     }
 
