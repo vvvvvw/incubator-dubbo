@@ -18,12 +18,15 @@ package org.apache.dubbo.rpc.cluster.support;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailoverClusterInvoker}
  *
+ */
+/*
+失败自动切换，当调用出现失败的时候，会自动切换集群中其他服务器，
+来获得invoker重试，通常用于读操作，但重试会带来更长延迟。一般都会设置重试次数。
  */
 public class FailoverCluster implements Cluster {
 
@@ -31,6 +34,7 @@ public class FailoverCluster implements Cluster {
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        // 创建FailoverClusterInvoker
         return new FailoverClusterInvoker<T>(directory);
     }
 

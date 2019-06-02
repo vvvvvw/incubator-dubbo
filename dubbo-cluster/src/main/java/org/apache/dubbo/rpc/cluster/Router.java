@@ -20,6 +20,7 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
+import org.apache.dubbo.rpc.cluster.support.Cluster;
 
 import java.util.List;
 
@@ -28,23 +29,27 @@ import java.util.List;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Routing">Routing</a>
  *
- * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ * @see Cluster#join(Directory)
  * @see org.apache.dubbo.rpc.cluster.Directory#list(Invocation)
  */
+//dubbo路由规则，路由规则决定了一次dubbo服务调用的目标服务器，路由规则分两种：条件路由规则和脚本路由规则，并且支持可拓展。
+    /*
+    该接口是路由规则的接口，定义的两个方法，第一个方法是获得路由规则的url，第二个方法是筛选出跟规则匹配的Invoker集合。
+     */
 public interface Router extends Comparable<Router> {
 
     int DEFAULT_PRIORITY = Integer.MAX_VALUE;
 
     /**
      * Get the router url.
-     *
+     * 获得路由规则的url
      * @return url
      */
     URL getUrl();
 
     /**
      * Filter invokers with current routing rule and only return the invokers that comply with the rule.
-     *
+     * 筛选出跟规则匹配的Invoker集合
      * @param invokers   invoker list
      * @param url        refer url
      * @param invocation invocation

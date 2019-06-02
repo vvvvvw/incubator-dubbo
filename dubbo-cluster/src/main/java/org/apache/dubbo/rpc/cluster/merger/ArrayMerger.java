@@ -23,26 +23,35 @@ import java.lang.reflect.Array;
 
 public class ArrayMerger implements Merger<Object[]> {
 
+    //单例
     public static final ArrayMerger INSTANCE = new ArrayMerger();
 
+    // TODO: 会过滤掉为null的元素  by 15258 2019/6/2 10:40
+    //循环合并
     @Override
     public Object[] merge(Object[]... items) {
+        // 如果长度为0  则直接返回
         if (ArrayUtils.isEmpty(items)) {
             return new Object[0];
         }
 
         int i = 0;
+        // items中第一个不为null的元素
         while (i < items.length && items[i] == null) {
             i++;
         }
 
+        //如果只有一个元素，直接返回
         if (i == items.length) {
             return new Object[0];
         }
 
+        // 获得数组类型
         Class<?> type = items[i].getClass().getComponentType();
 
+        // 总长
         int totalLen = 0;
+        // 遍历所有需要合并的对象
         for (; i < items.length; i++) {
             if (items[i] == null) {
                 continue;
@@ -51,19 +60,25 @@ public class ArrayMerger implements Merger<Object[]> {
             if (itemType != type) {
                 throw new IllegalArgumentException("Arguments' types are different");
             }
+            // 累加数组长度
             totalLen += items[i].length;
         }
 
+        //如果元素为0，直接返回空数组
         if (totalLen == 0) {
             return new Object[0];
         }
 
+        // 创建长度
         Object result = Array.newInstance(type, totalLen);
 
         int index = 0;
+        // 遍历需要合并的对象
         for (Object[] array : items) {
+            // 遍历每个数组中的数据
             if (array != null) {
                 for (int j = 0; j < array.length; j++) {
+                    // 加入到最终结果中
                     Array.set(result, index++, array[j]);
                 }
             }

@@ -19,18 +19,22 @@ package org.apache.dubbo.rpc.cluster;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.extension.Adaptive;
 import org.apache.dubbo.common.extension.SPI;
+import org.apache.dubbo.rpc.cluster.support.Cluster;
 
 /**
  * RouterFactory. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Routing">Routing</a>
  *
- * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ * @see Cluster#join(Directory)
  * @see org.apache.dubbo.rpc.cluster.Directory#list(org.apache.dubbo.rpc.Invocation)
  * <p>
  * Note Router has a different behaviour since 2.7.0, for each type of Router, there will only has one Router instance
  * for each service. See {@link CacheableRouterFactory} and {@link RouterChain} for how to extend a new Router or how
  * the Router instances are loaded.
+ */
+/*
+该接口是路由工厂接口，定义了获得路由实例的方法。
  */
 @SPI
 public interface RouterFactory {
@@ -38,7 +42,7 @@ public interface RouterFactory {
     /**
      * Create router.
      * Since 2.7.0, most of the time, we will not use @Adaptive feature, so it's kept only for compatibility.
-     *
+     * 创建路由
      * @param url url
      * @return router instance
      */

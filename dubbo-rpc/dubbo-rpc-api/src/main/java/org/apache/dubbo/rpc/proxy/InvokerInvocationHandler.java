@@ -29,6 +29,8 @@ import java.lang.reflect.Method;
 /**
  * InvokerHandler
  */
+//该类实现了InvocationHandler接口，动态代理类都必须要实现InvocationHandler接口，
+// 而该类实现的是对于基础方法不使用rpc调用，其他方法使用rpc调用。
 public class InvokerInvocationHandler implements InvocationHandler {
     private static final Logger logger = LoggerFactory.getLogger(InvokerInvocationHandler.class);
     private final Invoker<?> invoker;
@@ -39,11 +41,15 @@ public class InvokerInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        // 获得方法名
         String methodName = method.getName();
+        // 获得参数类型
         Class<?>[] parameterTypes = method.getParameterTypes();
+        // 如果方法参数类型是object类型，则直接反射调用
         if (method.getDeclaringClass() == Object.class) {
             return method.invoke(invoker, args);
         }
+        // 基础方法，不使用 RPC 调用
         if ("toString".equals(methodName) && parameterTypes.length == 0) {
             return invoker.toString();
         }
@@ -54,12 +60,14 @@ public class InvokerInvocationHandler implements InvocationHandler {
             return invoker.equals(args[0]);
         }
 
+        // rpc调用
         return invoker.invoke(createInvocation(method, args)).recreate();
     }
 
     private RpcInvocation createInvocation(Method method, Object[] args) {
         RpcInvocation invocation = new RpcInvocation(method, args);
         if (RpcUtils.hasFutureReturnType(method)) {
+            //如果方法返回值 继承自 CompletableFuture，则表示是异步调用
             invocation.setAttachment(Constants.FUTURE_RETURNTYPE_KEY, "true");
             invocation.setAttachment(Constants.ASYNC_KEY, "true");
         }

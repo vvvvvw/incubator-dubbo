@@ -28,8 +28,10 @@ import java.lang.reflect.Proxy;
 /**
  * JdkRpcProxyFactory
  */
+//该类继承了AbstractProxyFactory，是jdk的代理工厂的主要逻辑。
 public class JdkProxyFactory extends AbstractProxyFactory {
 
+    // 调用了 Proxy.newProxyInstance直接获得代理类
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
@@ -39,11 +41,14 @@ public class JdkProxyFactory extends AbstractProxyFactory {
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
         return new AbstractProxyInvoker<T>(proxy, type, url) {
+            // 创建AbstractProxyInvoker对象
             @Override
             protected Object doInvoke(T proxy, String methodName,
                                       Class<?>[] parameterTypes,
                                       Object[] arguments) throws Throwable {
+                // 反射获得方法
                 Method method = proxy.getClass().getMethod(methodName, parameterTypes);
+                // 执行方法
                 return method.invoke(proxy, arguments);
             }
         };

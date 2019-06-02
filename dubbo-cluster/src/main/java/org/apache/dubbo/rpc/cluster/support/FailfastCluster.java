@@ -18,12 +18,14 @@ package org.apache.dubbo.rpc.cluster.support;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailfastClusterInvoker}
  *
+ */
+/*
+只会进行一次调用，失败后立即抛出异常。适用于幂等操作，比如新增记录。
  */
 public class FailfastCluster implements Cluster {
 

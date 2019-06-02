@@ -18,12 +18,15 @@ package org.apache.dubbo.rpc.cluster.support;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailsafeClusterInvoker}
  *
+ */
+/*
+失败安全，出现异常时，直接忽略。失败安全就是当调用过程中出现异常时，
+FailsafeClusterInvoker 仅会打印异常，而不会抛出异常。适用于写入审计日志等操作
  */
 public class FailsafeCluster implements Cluster {
 
@@ -31,6 +34,7 @@ public class FailsafeCluster implements Cluster {
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        // 创建FailsafeClusterInvoker
         return new FailsafeClusterInvoker<T>(directory);
     }
 

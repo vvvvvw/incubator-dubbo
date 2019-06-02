@@ -18,12 +18,14 @@ package org.apache.dubbo.rpc.cluster.support;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailbackClusterInvoker}
  *
+ */
+/*
+失败自动恢复，在调用失败后，返回一个空结果给服务提供者。并通过定时任务对失败的调用记录并且重传，适合执行消息通知等操作。
  */
 public class FailbackCluster implements Cluster {
 
@@ -31,6 +33,7 @@ public class FailbackCluster implements Cluster {
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        // 创建一个FailbackClusterInvoker
         return new FailbackClusterInvoker<T>(directory);
     }
 

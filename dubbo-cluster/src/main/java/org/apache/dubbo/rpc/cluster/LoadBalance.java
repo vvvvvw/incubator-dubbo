@@ -23,6 +23,7 @@ import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.loadbalance.RandomLoadBalance;
+import org.apache.dubbo.rpc.cluster.support.Cluster;
 
 import java.util.List;
 
@@ -31,14 +32,16 @@ import java.util.List;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Load_balancing_(computing)">Load-Balancing</a>
  *
- * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ * @see Cluster#join(Directory)
  */
+//该接口是负载均衡的接口，dubbo也提供了四种负载均衡策略
+//dubbo支持的所有负载均衡策略算法。
 @SPI(RandomLoadBalance.NAME)
 public interface LoadBalance {
 
     /**
      * select one invoker in list.
-     *
+     * 选择一个合适的调用，并且返回
      * @param invokers   invokers.
      * @param url        refer url
      * @param invocation invocation.

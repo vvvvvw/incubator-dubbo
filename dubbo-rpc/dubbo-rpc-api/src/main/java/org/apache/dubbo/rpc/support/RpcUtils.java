@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RpcUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(RpcUtils.class);
+    //invoker id
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
     public static Class<?> getReturnType(Invocation invocation) {
@@ -117,16 +118,20 @@ public class RpcUtils {
      * @param url
      * @param inv
      */
+    //如果自动添加invocationid，并且现在还没有添加并且 inv是 RpcInvocation的实例，则添加
     public static void attachInvocationIdIfAsync(URL url, Invocation inv) {
+        //如果自动添加invocationid，并且现在还没有添加并且 inv是 RpcInvocation的实例
         if (isAttachInvocationId(url, inv) && getInvocationId(inv) == null && inv instanceof RpcInvocation) {
             ((RpcInvocation) inv).setAttachment(Constants.ID_KEY, String.valueOf(INVOKE_ID.getAndIncrement()));
         }
     }
 
+    //是否会自动添加invocationid(异步模式自动添加)
     private static boolean isAttachInvocationId(URL url, Invocation invocation) {
         String value = url.getMethodParameter(invocation.getMethodName(), Constants.AUTO_ATTACH_INVOCATIONID_KEY);
         if (value == null) {
             // add invocationid in async operation by default
+            //异步模式自动添加invocationid
             return isAsync(url, invocation);
         } else if (Boolean.TRUE.toString().equalsIgnoreCase(value)) {
             return true;
@@ -173,6 +178,7 @@ public class RpcUtils {
         return invocation.getParameterTypes();
     }
 
+    //是否是异步调用
     public static boolean isAsync(URL url, Invocation inv) {
         boolean isAsync;
         if (Boolean.TRUE.toString().equals(inv.getAttachment(Constants.ASYNC_KEY))) {
@@ -187,6 +193,7 @@ public class RpcUtils {
         return Boolean.TRUE.toString().equals(inv.getAttachment(Constants.FUTURE_RETURNTYPE_KEY));
     }
 
+    //是否方法返回值 继承自 CompletableFuture
     public static boolean hasFutureReturnType(Method method) {
         return CompletableFuture.class.isAssignableFrom(method.getReturnType());
     }

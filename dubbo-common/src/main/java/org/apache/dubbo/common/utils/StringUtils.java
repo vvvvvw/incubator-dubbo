@@ -681,6 +681,7 @@ public final class StringUtils {
      * @param itemSeparator item separator.
      * @return key-value map;
      */
+    //key取值:_.a-zA-Z0-9.value取值: 非空格
     private static Map<String, String> parseKeyValuePair(String str, String itemSeparator) {
         String[] tmp = str.split(itemSeparator);
         Map<String, String> map = new HashMap<String, String>(tmp.length);

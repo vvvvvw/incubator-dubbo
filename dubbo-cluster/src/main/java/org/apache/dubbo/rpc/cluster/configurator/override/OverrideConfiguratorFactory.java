@@ -24,10 +24,12 @@ import org.apache.dubbo.rpc.cluster.ConfiguratorFactory;
  * OverrideConfiguratorFactory
  *
  */
+//该类是OverrideConfigurator的工厂类，用来提供OverrideConfigurator实例。
 public class OverrideConfiguratorFactory implements ConfiguratorFactory {
 
     @Override
     public Configurator getConfigurator(URL url) {
+        // 创建OverrideConfigurator
         return new OverrideConfigurator(url);
     }
 

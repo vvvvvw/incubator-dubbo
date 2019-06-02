@@ -32,18 +32,21 @@ import java.util.Optional;
  * Configurator. (SPI, Prototype, ThreadSafe)
  *
  */
+//该接口是配置规则的接口，定义了两个方法，第一个是配置规则，
+// 并且生成url，第二个是把配置配置到旧的url中，其实都是在url上应用规则。
+//根据url上的配置规则生成配置信息
 public interface Configurator extends Comparable<Configurator> {
 
     /**
      * Get the configurator url.
-     *
+     * 配置规则，生成url
      * @return configurator url.
      */
     URL getUrl();
 
     /**
      * Configure the provider url.
-     *
+     * 把规则配置到URL中
      * @param url - old provider url.
      * @return new provider url.
      */
@@ -66,7 +69,11 @@ public interface Configurator extends Comparable<Configurator> {
      * @param urls URL list to convert
      * @return converted configurator list
      */
+    //该方法是处理配置规则url集合，转换覆盖url映射以便在重新引用时使用，
+    // 每次发送所有规则，网址将被重新组装和计算。
+    //将配置规则解析为 Configurator
     static Optional<List<Configurator>> toConfigurators(List<URL> urls) {
+        // 如果为空，则返回空集合
         if (CollectionUtils.isEmpty(urls)) {
             return Optional.empty();
         }
@@ -74,21 +81,31 @@ public interface Configurator extends Comparable<Configurator> {
         ConfiguratorFactory configuratorFactory = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .getAdaptiveExtension();
 
+        //配置过滤器列表
         List<Configurator> configurators = new ArrayList<>(urls.size());
+        //协议为空或者 覆盖的值为空，则清空 前面已经解析的 configurators
+        // 遍历url集合
         for (URL url : urls) {
+            //如果是协议是empty的值，则清空配置集合
+            // protocol 为配置规则中的 override或者 absent
             if (Constants.EMPTY_PROTOCOL.equals(url.getProtocol())) {
                 configurators.clear();
                 break;
             }
+            // 覆盖的参数集合
             Map<String, String> override = new HashMap<>(url.getParameters());
             //The anyhost parameter of override may be added automatically, it can't change the judgement of changing url
+            // 覆盖的anyhost参数可以自动添加，也不能改变更改url的判断
             override.remove(Constants.ANYHOST_KEY);
+            // 如果需要覆盖添加的值为0，则清空配置
             if (override.size() == 0) {
                 configurators.clear();
                 continue;
             }
+            // 加入配置规则集合
             configurators.add(configuratorFactory.getConfigurator(url));
         }
+        // 排序
         Collections.sort(configurators);
         return Optional.of(configurators);
     }
@@ -98,13 +115,16 @@ public interface Configurator extends Comparable<Configurator> {
      * 1. the url with a specific host ip should have higher priority than 0.0.0.0
      * 2. if two url has the same host, compare by priority value；
      */
+    // 这是配置的排序策略。先根据host升序，如果相同，再通过priority降序。
     @Override
     default int compareTo(Configurator o) {
         if (o == null) {
             return -1;
         }
 
+        // // host 升序
         int ipCompare = getUrl().getHost().compareTo(o.getUrl().getHost());
+        // 如果host相同，则根据priority降序来对比
         // host is the same, sort by priority
         if (ipCompare == 0) {
             int i = getUrl().getParameter(Constants.PRIORITY_KEY, 0);

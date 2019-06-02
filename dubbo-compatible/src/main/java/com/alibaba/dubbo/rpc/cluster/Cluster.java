@@ -21,7 +21,7 @@ import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 @Deprecated
-public interface Cluster extends org.apache.dubbo.rpc.cluster.Cluster {
+public interface Cluster extends org.apache.dubbo.rpc.cluster.support.Cluster {
 
     <T> com.alibaba.dubbo.rpc.Invoker<T> join(com.alibaba.dubbo.rpc.cluster.Directory<T> directory) throws
             com.alibaba.dubbo.rpc.RpcException;

@@ -629,7 +629,7 @@
                                     <resource>META-INF/dubbo/internal/org.apache.dubbo.rpc.ProxyFactory</resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-                                    <resource>META-INF/dubbo/internal/org.apache.dubbo.rpc.cluster.Cluster</resource>
+                                    <resource>META-INF/dubbo/internal/org.apache.dubbo.rpc.cluster.support.Cluster</resource>
                                 </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/dubbo/internal/org.apache.dubbo.rpc.cluster.LoadBalance

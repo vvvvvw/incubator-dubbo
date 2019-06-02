@@ -18,15 +18,16 @@ package org.apache.dubbo.rpc.cluster.support;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
+//该类实现了Cluster接口，是分组集合的集群实现。
 public class MergeableCluster implements Cluster {
 
     public static final String NAME = "mergeable";
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        // 创建MergeableClusterInvoker
         return new MergeableClusterInvoker<T>(directory);
     }
 

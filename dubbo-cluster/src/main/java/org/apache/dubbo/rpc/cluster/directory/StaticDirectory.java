@@ -31,9 +31,11 @@ import java.util.List;
 /**
  * StaticDirectory
  */
+//静态 Directory 实现类，将传入的 invokers 集合，封装成静态的 Directory 对象。
 public class StaticDirectory<T> extends AbstractDirectory<T> {
     private static final Logger logger = LoggerFactory.getLogger(StaticDirectory.class);
 
+    /** 默认备用的invokers **/
     private final List<Invoker<T>> invokers;
 
     public StaticDirectory(List<Invoker<T>> invokers) {
@@ -49,6 +51,7 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
     }
 
     public StaticDirectory(URL url, List<Invoker<T>> invokers, RouterChain<T> routerChain) {
+        //如果 url为空，则从 第一个invokers中获取url
         super(url == null && CollectionUtils.isNotEmpty(invokers) ? invokers.get(0).getUrl() : url, routerChain);
         if (CollectionUtils.isEmpty(invokers)) {
             throw new IllegalArgumentException("invokers == null");
@@ -66,6 +69,7 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
         if (isDestroyed()) {
             return false;
         }
+        // 遍历invokers，如果有一个可用，则可用
         for (Invoker<T> invoker : invokers) {
             if (invoker.isAvailable()) {
                 return true;
@@ -79,10 +83,12 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
         if (isDestroyed()) {
             return;
         }
+        // 遍历invokers，销毁所有的invoker
         super.destroy();
         for (Invoker<T> invoker : invokers) {
             invoker.destroy();
         }
+        // 清除集合
         invokers.clear();
     }
 
@@ -97,6 +103,7 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
         List<Invoker<T>> finalInvokers = invokers;
         if (routerChain != null) {
             try {
+                // 根据路由规则选择符合规则的invoker集合
                 finalInvokers = routerChain.route(getConsumerUrl(), invocation);
             } catch (Throwable t) {
                 logger.error("Failed to execute router: " + getUrl() + ", cause: " + t.getMessage(), t);

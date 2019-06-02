@@ -46,12 +46,14 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(FailbackClusterInvoker.class);
 
+    // 重试间隔
     private static final long RETRY_FAILED_PERIOD = 5;
 
     private final int retries;
 
     private final int failbackTasks;
 
+    //定时器
     private volatile Timer failTimer;
 
     public FailbackClusterInvoker(Directory<T> directory) {
@@ -80,6 +82,7 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 }
             }
         }
+        // 对失败的调用进行重试
         RetryTimerTask retryTimerTask = new RetryTimerTask(loadbalance, invocation, invokers, lastInvoker, retries, RETRY_FAILED_PERIOD);
         try {
             failTimer.newTimeout(retryTimerTask, RETRY_FAILED_PERIOD, TimeUnit.SECONDS);
@@ -88,16 +91,21 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
         }
     }
 
+    //选择invoker调用的逻辑，在抛出异常的时候，做了失败重试的机制，主要实现在addFailed。
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         Invoker<T> invoker = null;
         try {
+            // 检测invokers是否为空
             checkInvokers(invokers, invocation);
+            // 选择出invoker
             invoker = select(loadbalance, invocation, invokers, null);
+            // 调用
             return invoker.invoke(invocation);
         } catch (Throwable e) {
             logger.error("Failback to invoke method " + invocation.getMethodName() + ", wait for retry in background. Ignored exception: "
                     + e.getMessage() + ", ", e);
+            // 如果失败，则加入到失败队列，等待重试
             addFailed(loadbalance, invocation, invokers, invoker);
             return new RpcResult(); // ignore
         }
@@ -120,6 +128,7 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
         private final List<Invoker<T>> invokers;
         private final int retries;
         private final long tick;
+        //上一个重试的invoker
         private Invoker<T> lastInvoker;
         private int retryTimes = 0;
 

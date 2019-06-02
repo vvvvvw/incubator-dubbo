@@ -20,7 +20,6 @@ import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.LoadBalance;
 
@@ -30,6 +29,9 @@ import java.util.List;
  * AvailableCluster
  *
  */
+/*
+调用第一个可用的服务器，仅仅应用于多注册中心。
+ */
 public class AvailableCluster implements Cluster {
 
     public static final String NAME = "available";
@@ -37,9 +39,11 @@ public class AvailableCluster implements Cluster {
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
 
+        // 创建一个AbstractClusterInvoker
         return new AbstractClusterInvoker<T>(directory) {
             @Override
             public Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+                // 遍历所有的involer，只要有一个可用就直接调用。
                 for (Invoker<T> invoker : invokers) {
                     if (invoker.isAvailable()) {
                         return invoker.invoke(invocation);

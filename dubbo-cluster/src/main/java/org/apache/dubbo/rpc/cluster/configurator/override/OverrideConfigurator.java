@@ -23,6 +23,7 @@ import org.apache.dubbo.rpc.cluster.configurator.AbstractConfigurator;
  * OverrideConfigurator
  *
  */
+// 覆盖添加
 public class OverrideConfigurator extends AbstractConfigurator {
 
     public OverrideConfigurator(URL url) {
@@ -31,6 +32,7 @@ public class OverrideConfigurator extends AbstractConfigurator {
 
     @Override
     public URL doConfigure(URL currentUrl, URL configUrl) {
+        // 覆盖添加
         return currentUrl.addParameters(configUrl.getParameters());
     }
 

@@ -401,6 +401,13 @@ public class UrlUtils {
                 && (consumerClassifier == null || Constants.ANY_VALUE.equals(consumerClassifier) || StringUtils.isEquals(consumerClassifier, providerClassifier));
     }
 
+    /**
+     *  value是否匹配 pattern
+     * @param pattern 匹配规则
+     * @param value 需要用来匹配的 value
+     * @param param 消费者的refer url
+     * @return
+     */
     public static boolean isMatchGlobPattern(String pattern, String value, URL param) {
         if (param != null && pattern.startsWith("$")) {
             pattern = param.getRawParameter(pattern.substring(1));
@@ -408,6 +415,12 @@ public class UrlUtils {
         return isMatchGlobPattern(pattern, value);
     }
 
+    /**
+     * value是否能匹配上pattern，通配符 *
+     * @param pattern
+     * @param value
+     * @return
+     */
     public static boolean isMatchGlobPattern(String pattern, String value) {
         if ("*".equals(pattern)) {
             return true;
@@ -453,16 +466,19 @@ public class UrlUtils {
         return urls.stream().filter(predicate).collect(Collectors.toList());
     }
 
+    //是覆盖配置的url
     public static boolean isConfigurator(URL url) {
         return OVERRIDE_PROTOCOL.equals(url.getProtocol()) ||
                 CONFIGURATORS_CATEGORY.equals(url.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY));
     }
 
+    //是路由规则url
     public static boolean isRoute(URL url) {
         return ROUTE_PROTOCOL.equals(url.getProtocol()) ||
                 ROUTERS_CATEGORY.equals(url.getParameter(CATEGORY_KEY, DEFAULT_CATEGORY));
     }
 
+    //是服务提供者 url
     public static boolean isProvider(URL url) {
         return !OVERRIDE_PROTOCOL.equals(url.getProtocol()) &&
                 !ROUTE_PROTOCOL.equals(url.getProtocol()) &&

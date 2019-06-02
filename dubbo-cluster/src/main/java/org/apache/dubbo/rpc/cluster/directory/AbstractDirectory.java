@@ -36,17 +36,22 @@ import java.util.Map;
  * Abstract implementation of Directory: Invoker list returned from this Directory's list method have been filtered by Routers
  *
  */
+//该类实现了Directory接口
 public abstract class AbstractDirectory<T> implements Directory<T> {
 
     // logger
     private static final Logger logger = LoggerFactory.getLogger(AbstractDirectory.class);
 
+    /** url对象 **/
     private final URL url;
 
+    /** 是否销毁 **/
     private volatile boolean destroyed = false;
 
+    /** 消费者端url **/
     private volatile URL consumerUrl;
 
+    /** 路由集合 **/
     protected RouterChain<T> routerChain;
 
     public AbstractDirectory(URL url) {
@@ -63,7 +68,9 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         }
 
         if (url.getProtocol().equals(Constants.REGISTRY_PROTOCOL)) {
+            //将覆盖规则
             Map<String, String> queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(Constants.REFER_KEY));
+            //将 refer 参数解析为 键值对 并设置到 url中
             this.url = url.addParameters(queryMap).removeParameter(Constants.MONITOR_KEY);
         } else {
             this.url = url;
@@ -75,6 +82,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
 
     @Override
     public List<Invoker<T>> list(Invocation invocation) throws RpcException {
+        // 如果销毁，则抛出异常
         if (destroyed) {
             throw new RpcException("Directory already destroyed .url: " + getUrl());
         }

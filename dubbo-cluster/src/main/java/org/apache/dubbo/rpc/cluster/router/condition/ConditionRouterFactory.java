@@ -24,12 +24,14 @@ import org.apache.dubbo.rpc.cluster.RouterFactory;
  * ConditionRouterFactory
  *
  */
+//基于条件表达式规则路由工厂类
 public class ConditionRouterFactory implements RouterFactory {
 
     public static final String NAME = "condition";
 
     @Override
     public Router getRouter(URL url) {
+        // 创建一个ConditionRouter
         return new ConditionRouter(url);
     }
 

@@ -18,13 +18,14 @@ package org.apache.dubbo.rpc.cluster.support.wrapper;
 
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.cluster.Cluster;
+import org.apache.dubbo.rpc.cluster.support.Cluster;
 import org.apache.dubbo.rpc.cluster.Directory;
 
 /**
  * mock impl
  *
  */
+//该类是服务降级的装饰器类，对Cluster进行了功能增强，增强了服务降级的功能。
 public class MockClusterWrapper implements Cluster {
 
     private Cluster cluster;
@@ -35,6 +36,7 @@ public class MockClusterWrapper implements Cluster {
 
     @Override
     public <T> Invoker<T> join(Directory<T> directory) throws RpcException {
+        // 创建MockClusterInvoker
         return new MockClusterInvoker<T>(directory,
                 this.cluster.join(directory));
     }

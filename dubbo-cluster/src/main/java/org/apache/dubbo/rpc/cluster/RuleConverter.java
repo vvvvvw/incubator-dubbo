@@ -22,6 +22,8 @@ import org.apache.dubbo.common.extension.SPI;
 
 import java.util.List;
 
+//dubbo路由规则，路由规则决定了一次dubbo服务调用的目标服务器，
+// 路由规则分两种：条件路由规则和脚本路由规则，并且支持可拓展。
 @SPI
 public interface RuleConverter {
 

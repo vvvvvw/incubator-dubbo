@@ -30,6 +30,7 @@ public class ProtocolUtils {
                 url.getParameter(Constants.GROUP_KEY));
     }
 
+    //得到服务key group+"/"+serviceName+":"+serviceVersion+":"+port
     public static String serviceKey(int port, String serviceName, String serviceVersion, String serviceGroup) {
         StringBuilder buf = new StringBuilder();
         if (StringUtils.isNotEmpty(serviceGroup)) {

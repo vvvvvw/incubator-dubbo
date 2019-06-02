@@ -25,8 +25,12 @@ import org.apache.dubbo.rpc.RpcException;
 /**
  * InvokerWrapper
  */
+//该类是Invoker的包装类，其中用到类装饰模式，不过并没有实现实际的功能增强。
 public class InvokerWrapper<T> implements Invoker<T> {
 
+    /**
+     * invoker对象
+     */
     private final Invoker<T> invoker;
 
     private final URL url;

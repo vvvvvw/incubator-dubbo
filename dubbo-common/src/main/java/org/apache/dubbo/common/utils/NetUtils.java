@@ -21,6 +21,7 @@ import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.config.ConfigurationUtils;
 import org.apache.dubbo.common.logger.Logger;
 import org.apache.dubbo.common.logger.LoggerFactory;
+import sun.net.InetAddressCachePolicy;
 
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -141,6 +142,7 @@ public class NetUtils {
      * @return true if it is reachable
      */
     static boolean isValidV6Address(Inet6Address address) {
+        //如果优先获取 ipv6地址
         boolean preferIpv6 = Boolean.getBoolean("java.net.preferIPv6Addresses");
         if (!preferIpv6) {
             return false;
@@ -155,6 +157,10 @@ public class NetUtils {
 
     static boolean isValidPublicAddress(InetAddress address) {
         return !address.isSiteLocalAddress() && !address.isLoopbackAddress();
+    }
+
+    public static void main(String[] args) throws UnknownHostException {
+        System.out.println(InetAddress.getByName("169.254.187.98").isAnyLocalAddress());
     }
 
     /**
@@ -239,7 +245,10 @@ public class NetUtils {
         return localAddress;
     }
 
+    // todo 为什么需要是有效的网关ipv4地址？
+    //是否是有效的 公网ipv4地址 或者 可达的ipv6地址，并正则化
     private static Optional<InetAddress> toValidAddress(InetAddress address) {
+        //如果是有效的公网地址
         if (isValidPublicAddress(address)) {
             if (address instanceof Inet6Address) {
                 Inet6Address v6Address = (Inet6Address) address;

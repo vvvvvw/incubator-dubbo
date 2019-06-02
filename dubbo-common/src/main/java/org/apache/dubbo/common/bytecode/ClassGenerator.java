@@ -387,6 +387,7 @@ public final class ClassGenerator {
         return getCtClass(c.getDeclaringClass()).getConstructor(ReflectUtils.getDesc(c));
     }
 
+    // dubbo生成的assist动态类的标记
     public static interface DC {
 
     } // dynamic class tag interface.

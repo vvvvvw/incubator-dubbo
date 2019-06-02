@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MergerFactory {
 
+    //Merger 对象缓存 Map<Merger对应的第一个泛型参数，Merger>
     private static final ConcurrentMap<Class<?>, Merger<?>> mergerCache =
             new ConcurrentHashMap<Class<?>, Merger<?>>();
 
@@ -38,36 +39,53 @@ public class MergerFactory {
      * @return the merger which merges an array of returnType into one, return null if not exist
      * @throws IllegalArgumentException if returnType is null
      */
+    //获得指定类型的Merger对象
     public static <T> Merger<T> getMerger(Class<T> returnType) {
         if (returnType == null) {
             throw new IllegalArgumentException("returnType is null");
         }
 
         Merger result;
+        // 如果类型是数组，则取得数组中元素类型的merger
         if (returnType.isArray()) {
+            // 获得类型
             Class type = returnType.getComponentType();
+            // 从缓存中获得该类型的Merger对象
             result = mergerCache.get(type);
             if (result == null) {
+                // 如果为空，则加载Merger
+                // 初始化所有的 Merger 扩展对象，到 mergerCache 缓存中。
                 loadMergers();
+                // 从集合中取出对应的Merger对象
                 result = mergerCache.get(type);
             }
+            // 如果没有对应的merge并且type的类型也不是原生类型，则使用ArrayMerger
             if (result == null && !type.isPrimitive()) {
                 result = ArrayMerger.INSTANCE;
             }
         } else {
+            // 否则直接从mergerCache中取出
             result = mergerCache.get(returnType);
             if (result == null) {
+                // 初始化所有的 Merger 扩展对象，到 mergerCache 缓存中。
                 loadMergers();
+                // 从集合中取出
                 result = mergerCache.get(returnType);
             }
         }
         return result;
     }
 
+    /**
+     * 初始化所有的 Merger 扩展对象，到 mergerCache 缓存中。
+     */
     static void loadMergers() {
+        // 获得Merger所有的扩展对象名
         Set<String> names = ExtensionLoader.getExtensionLoader(Merger.class)
                 .getSupportedExtensions();
+        // 遍历
         for (String name : names) {
+            // 加载每一个扩展实现，然后放入缓存。
             Merger m = ExtensionLoader.getExtensionLoader(Merger.class).getExtension(name);
             mergerCache.putIfAbsent(ReflectUtils.getGenericClass(m.getClass()), m);
         }

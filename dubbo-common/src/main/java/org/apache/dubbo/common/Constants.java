@@ -39,6 +39,7 @@ public class Constants {
 
     public static final String UNSUBSCRIBE = "unsubscribe";
 
+    //(routers/route/providers/configurators/dynamicconfigurators/appdynamicconfigurators)
     public static final String CATEGORY_KEY = "category";
 
     public static final String PROVIDERS_CATEGORY = "providers";
@@ -69,8 +70,10 @@ public class Constants {
 
     public static final String DEFAULT_CATEGORY = PROVIDERS_CATEGORY;
 
+    //是否启用
     public static final String ENABLED_KEY = "enabled";
 
+    //是否关闭(优先 disabled)
     public static final String DISABLED_KEY = "disabled";
 
     public static final String VALIDATION_KEY = "validation";
@@ -211,6 +214,7 @@ public class Constants {
     /**
      * key for router type, for e.g., "script"/"file",  corresponding to ScriptRouterFactory.NAME, FileRouterFactory.NAME
      */
+    //路由类型， script/file/condition
     public static final String ROUTER_KEY = "router";
 
     public static final String CLUSTER_KEY = "cluster";
@@ -253,8 +257,11 @@ public class Constants {
 
     public static final String LOCAL_KEY = "local";
 
+    //本地Stub 接口名字，1.如果没有配置，则 stub接口名字 为 接口名字+Local 2.为true或者default，则stub接口名字
+    //为 接口名字+Sub 3.属性就是Sub接口名字
     public static final String STUB_KEY = "stub";
 
+    //mock配置
     public static final String MOCK_KEY = "mock";
 
     public static final String PROTOCOL_KEY = "protocol";
@@ -269,6 +276,7 @@ public class Constants {
 
     public static final String WEIGHT_KEY = "weight";
 
+    //fork模式，调用多少个客户端
     public static final String FORKS_KEY = "forks";
 
     public static final String DEFAULT_THREADPOOL = "limited";
@@ -381,9 +389,11 @@ public class Constants {
 
     public static final String ID_KEY = "id";
 
+    //是否异步调用 value:true/false
     public static final String ASYNC_KEY = "async";
 
     public static final String FUTURE_GENERATED_KEY = "future_generated";
+    //表示是异步调用
     public static final String FUTURE_RETURNTYPE_KEY = "future_returntype";
 
     public static final String ASYNC_SUFFIX = "Async";
@@ -414,6 +424,7 @@ public class Constants {
 
     public static final String TIMESTAMP_KEY = "timestamp";
 
+    //远程服务端启动时间戳
     public static final String REMOTE_TIMESTAMP_KEY = "remote.timestamp";
 
     public static final String WARMUP_KEY = "warmup";
@@ -426,12 +437,14 @@ public class Constants {
 
     public static final String SUBSCRIBE_KEY = "subscribe";
 
+    //泳道
     public static final String GROUP_KEY = "group";
 
     public static final String PATH_KEY = "path";
 
     public static final String INTERFACE_KEY = "interface";
 
+    //需要代理的接口，逗号分隔
     public static final String INTERFACES = "interfaces";
 
     public static final String GENERIC_KEY = "generic";
@@ -525,6 +538,7 @@ public class Constants {
 
     public static final String FORCE_KEY = "force";
 
+    //合并策略
     public static final String MERGER_KEY = "merger";
 
     /**
@@ -544,6 +558,7 @@ public class Constants {
     /**
      * To decide whether to exclude unavailable invoker from the cluster
      */
+    //当availablecheck为true时，总是应该调用invoker.isAvailable()来检查连接是否可用
     public static final String CLUSTER_AVAILABLE_CHECK_KEY = "cluster.availablecheck";
 
     /**
@@ -556,6 +571,7 @@ public class Constants {
     /**
      * To decide whether to enable sticky strategy for cluster
      */
+    // 是否启动了粘滞连接，方法级别
     public static final String CLUSTER_STICKY_KEY = "sticky";
 
     /**
@@ -714,6 +730,7 @@ public class Constants {
 
     public static final String LOCAL_PROTOCOL = "injvm";
 
+    //是否会自动添加invocationid
     public static final String AUTO_ATTACH_INVOCATIONID_KEY = "invocationid.autoattach";
 
     public static final String SCOPE_KEY = "scope";
@@ -802,6 +819,7 @@ public class Constants {
 
     public static final String CYCLE_REPORT_KEY = "cycle.report";
 
+    //配置的版本号（2.7.0之后还是之前解析不同）
     public static final String CONFIG_VERSION_KEY = "configVersion";
 
     public static final String COMPATIBLE_CONFIG_KEY = "compatible_config";
@@ -831,11 +849,13 @@ public class Constants {
     /**
      * Hash nodes name
      */
+    //// 一致性hash负载均衡策略，每个真实节点对应的虚拟节点数，默认为每个真实节点有160个虚拟节点
     public static final String HASH_NODES = "hash.nodes";
 
     /**
      * Hash arguments name
      */
+    //参与一致性hash的参数下标值(，分隔)，默认对第一个参数进行 hash 运算
     public static final String HASH_ARGUMENTS = "hash.arguments";
 
     /**
