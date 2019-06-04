@@ -54,7 +54,7 @@ public interface ProxyFactory {
      * @param <T>
      * @param proxy
      * @param type
-     * @param url
+     * @param url todo 存在注册中心的情况下，为什么这个地方是注册中心的url
      * @return invoker
      */
     @Adaptive({Constants.PROXY_KEY})

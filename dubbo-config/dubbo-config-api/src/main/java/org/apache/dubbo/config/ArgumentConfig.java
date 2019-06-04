@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 /**
  * The method arguments configuration
- *
+ * 方法参数
  * @export
  */
 public class ArgumentConfig implements Serializable {
@@ -31,16 +31,19 @@ public class ArgumentConfig implements Serializable {
     private static final long serialVersionUID = -2165482463925213595L;
 
     /**
+     * 第几个参数
      * The argument index: index -1 represents not set
      */
     private Integer index = -1;
 
     /**
+     * 参数类型
      * Argument type
      */
     private String type;
 
     /**
+     * 是否是 callback接口
      * Whether the argument is the callback interface
      */
     private Boolean callback;

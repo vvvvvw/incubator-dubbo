@@ -25,21 +25,28 @@ import java.lang.annotation.Target;
 /**
  * Parameter
  */
+/////提取config中标注了 Parameter注解的方法，并获取属性值到 parameters上，属性名以 prefix开头
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Parameter {
 
+    //参数对应的属性，如果为空，则使用get方法来提取
     String key() default "";
 
+    //是否必须(不能为空或者空字符串)
     boolean required() default false;
 
+    //是否跳过本属性
     boolean excluded() default false;
 
+    //是否需要进行url编码
     boolean escaped() default false;
 
+    //是否是属性
     boolean attribute() default false;
 
+    //是否需要提取 key和default.key 的属性并设置到 prefix.key属性上
     boolean append() default false;
 
     /**
@@ -57,6 +64,7 @@ public @interface Parameter {
      *
      * </pre>
      */
+    //是否使用key作为 属性名
     boolean useKeyAsProperty() default true;
 
 }

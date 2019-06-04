@@ -219,6 +219,7 @@ public final class Version {
         checkDuplicate(cls, false);
     }
 
+    //是否能加载到 多个同名文件
     public static void checkDuplicate(String path, boolean failOnError) {
         try {
             // search in caller's classloader
@@ -240,6 +241,7 @@ public final class Version {
     /**
      * search resources in caller's classloader
      */
+    //使用 version.class 的类加载器加载 path 的url
     private static Set<String> getResources(String path) throws IOException {
         Enumeration<URL> urls = ClassHelper.getCallerClassLoader(Version.class).getResources(path);
         Set<String> files = new HashSet<String>();

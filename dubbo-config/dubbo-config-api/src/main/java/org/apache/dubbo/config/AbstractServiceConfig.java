@@ -53,11 +53,13 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     /**
      * The time delay register service (milliseconds)
      */
+    //延迟注册的时间
     protected Integer delay;
 
     /**
      * Whether to export the service
      */
+    //是否允许export
     protected Boolean export;
 
     /**

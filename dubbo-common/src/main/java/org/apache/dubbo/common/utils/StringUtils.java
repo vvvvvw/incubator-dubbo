@@ -746,6 +746,7 @@ public final class StringUtils {
         return buf.toString();
     }
 
+    //将camelName根据驼峰分隔，并且以split分隔
     public static String camelToSplitName(String camelName, String split) {
         if (isEmpty(camelName)) {
             return camelName;

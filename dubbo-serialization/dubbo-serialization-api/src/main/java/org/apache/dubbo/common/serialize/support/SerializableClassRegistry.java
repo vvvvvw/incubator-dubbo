@@ -25,14 +25,16 @@ import java.util.Map;
  * Provide a unified serialization registry, this class used for {@code dubbo-serialization-fst}
  * and {@code dubbo-serialization-kryo}, it will register some classes at startup time (for example {@link AbstractKryoFactory#create})
  */
+//该类提供一个序列化统一的注册中心，其实就是封装了可序列化类的集合
 public abstract class SerializableClassRegistry {
 
 
+    //可序列化类类的集合
     private static final Map<Class, Object> registrations = new LinkedHashMap<>();
 
     /**
      * only supposed to be called at startup time
-     *
+     * 把可序列化的类加入到集合
      * @param clazz object type
      */
     public static void registerClass(Class clazz) {
@@ -41,7 +43,7 @@ public abstract class SerializableClassRegistry {
 
     /**
      * only supposed to be called at startup time
-     *
+     * 把可序列化的类加入到集合
      * @param clazz object type
      * @param serializer object serializer
      */
@@ -54,7 +56,7 @@ public abstract class SerializableClassRegistry {
 
     /**
      * get registered classes
-     *
+     * 获得可序列化的类的集合
      * @return class serializer
      * */
     public static Map<Class, Object> getRegisteredClasses() {

@@ -68,6 +68,7 @@ public abstract class AbstractMethodConfig extends AbstractConfig {
      * note that: the mock doesn't support on the provider side，and the mock is executed when a non-business exception
      * occurs after a remote service call
      */
+    //是否是本地伪装()
     protected String mock;
 
     /**

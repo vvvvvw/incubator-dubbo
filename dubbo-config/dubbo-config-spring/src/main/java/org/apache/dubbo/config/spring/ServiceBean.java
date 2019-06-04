@@ -70,6 +70,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     private transient String beanName;
 
+    //spring是否支持监听器，如果不支持，则直接导出服务
     private transient boolean supportedApplicationListener;
 
     private ApplicationEventPublisher applicationEventPublisher;
@@ -88,6 +89,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     public void setApplicationContext(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         SpringExtensionFactory.addApplicationContext(applicationContext);
+        //用于表示当前的 Spring 容器是否支持 ApplicationListener
         supportedApplicationListener = addApplicationListener(applicationContext, this);
     }
 
@@ -107,10 +109,12 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        // 如果服务没有被暴露并且服务没有被取消暴露，则打印日志
         if (!isExported() && !isUnexported()) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
             }
+            // 导出服务
             export();
         }
     }

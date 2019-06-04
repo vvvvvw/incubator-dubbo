@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 
 /**
  * Utility methods and public methods for parsing configuration
- *
+ * 用来解析配置的工具方法
  * @export
  */
 public abstract class AbstractConfig implements Serializable {
@@ -147,6 +147,7 @@ public abstract class AbstractConfig implements Serializable {
         appendParameters(parameters, config, null);
     }
 
+    //提取config中标注了 Parameter注解的方法，并获取属性值到 parameters上，属性名以 prefix开头
     @SuppressWarnings("unchecked")
     protected static void appendParameters(Map<String, String> parameters, Object config, String prefix) {
         if (config == null) {
@@ -167,29 +168,35 @@ public abstract class AbstractConfig implements Serializable {
                     } else {
                         key = calculatePropertyFromGetter(name);
                     }
+                    //调用config的get方法获得属性值
                     Object value = method.invoke(config);
                     String str = String.valueOf(value).trim();
                     if (value != null && str.length() > 0) {
                         if (parameter != null && parameter.escaped()) {
+                            //对value进行url编码
                             str = URL.encode(str);
                         }
                         if (parameter != null && parameter.append()) {
+                            //提取 default.key 的属性值
                             String pre = parameters.get(Constants.DEFAULT_KEY + "." + key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
+                            //提取 key 的属性值
                             pre = parameters.get(key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
                         }
                         if (prefix != null && prefix.length() > 0) {
+                            //将value 设置到 prefix.key上
                             key = prefix + "." + key;
                         }
                         parameters.put(key, str);
                     } else if (parameter != null && parameter.required()) {
                         throw new IllegalStateException(config.getClass().getSimpleName() + "." + key + " == null");
                     }
+                    //如果是 getParameters 方法，提取返回值并设置到 pre.key上
                 } else if ("getParameters".equals(name)
                         && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 0
@@ -212,6 +219,7 @@ public abstract class AbstractConfig implements Serializable {
         appendAttributes(parameters, config, null);
     }
 
+    //提取config中标注了 Parameter注解且attribute属性为true的方法，并将属性设置到 prefix.字段名首字母小写 这个属性上
     protected static void appendAttributes(Map<String, Object> parameters, Object config, String prefix) {
         if (config == null) {
             return;
@@ -407,11 +415,13 @@ public abstract class AbstractConfig implements Serializable {
         return propertyName;
     }
 
+    //通过get方法名获取get方法对应的字段名，并将字段名根据驼峰分隔，并且以split分隔
     private static String calculatePropertyFromGetter(String name) {
         int i = name.startsWith("get") ? 3 : 2;
         return StringUtils.camelToSplitName(name.substring(i, i + 1).toLowerCase() + name.substring(i + 1), ".");
     }
 
+    // 通过get方法名获取get方法对应的字段名，并将字段首字母小写后返回
     private static String calculateAttributeFromGetter(String getter) {
         int i = getter.startsWith("get") ? 3 : 2;
         return getter.substring(i, i + 1).toLowerCase() + getter.substring(i + 1);

@@ -80,6 +80,7 @@ public class Constants {
 
     public static final String CACHE_KEY = "cache";
 
+    //服务端:服务节点挂了，是否将注册的信息从注册中心删除(zk:是否是持久节点)
     public static final String DYNAMIC_KEY = "dynamic";
 
     public static final String STATUS_KEY = "status";
@@ -223,6 +224,7 @@ public class Constants {
 
     public static final String METADATA_REPORT_KEY = "metadata";
 
+    //服务端:监视器url
     public static final String MONITOR_KEY = "monitor";
 
     //客户端还是服务端 value:client 客户端 server:服务端
@@ -272,6 +274,7 @@ public class Constants {
 
     public static final String ZOOKEEPER_PROTOCOL = "zookeeper";
 
+    //服务端:服务类代理的生成方式，注册中心代理的生成方式(todo 待确认，但是注册中心url中也有一个该参数，并且和服务类代理同值)
     public static final String PROXY_KEY = "proxy";
 
     public static final String WEIGHT_KEY = "weight";
@@ -400,10 +403,13 @@ public class Constants {
 
     public static final String RETURN_KEY = "return";
 
+    // TODO: token的作用  by 15258 2019/6/4 7:55
+    //服务端:用户设置的token，接口级别，如果没有设置，则使用uuid
     public static final String TOKEN_KEY = "token";
 
     public static final String METHOD_KEY = "method";
 
+    //服务端: 发布接口的方法名集合，“，”分隔，如果接口没有方法，设置为*
     public static final String METHODS_KEY = "methods";
 
     //字符集
@@ -457,9 +463,11 @@ public class Constants {
 
     public static final String CLASSIFIER_KEY = "classifier";
 
+    // TODO: 下面是服务发布的版本号，那这个呢？  by 15258 2019/6/4 7:51
     //服务版本号
     public static final String VERSION_KEY = "version";
 
+    //服务发布的版本号
     public static final String REVISION_KEY = "revision";
 
     public static final String DUBBO_VERSION_KEY = "dubbo";
@@ -637,6 +645,7 @@ public class Constants {
     /**
      * The key name for export URL in register center
      */
+    //服务端: 注册中心url，value为服务类的url
     public static final String EXPORT_KEY = "export";
 
     /**
@@ -728,11 +737,13 @@ public class Constants {
      */
     public static final String INVOCATION_NEED_MOCK = "invocation.need.mock";
 
+    //暴露到本地的协议
     public static final String LOCAL_PROTOCOL = "injvm";
 
     //是否会自动添加invocationid
     public static final String AUTO_ATTACH_INVOCATIONID_KEY = "invocationid.autoattach";
 
+    //服务暴露的范围 none：不暴露 local:本地 remote:远程
     public static final String SCOPE_KEY = "scope";
 
     public static final String SCOPE_LOCAL = "local";

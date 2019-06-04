@@ -22,11 +22,12 @@ import java.lang.reflect.Type;
 /**
  * Object input interface.
  */
+//该接口是继承了DataInput 接口，在 DataInput 的基础上，增加读取object类型的数据。
 public interface ObjectInput extends DataInput {
 
     /**
      * read object
-     *
+     * 读取object类型数据
      * @return object
      * @throws IOException if an I/O error occurs
      * @throws ClassNotFoundException if an ClassNotFoundException occurs
@@ -35,7 +36,7 @@ public interface ObjectInput extends DataInput {
 
     /**
      * read object
-     *
+     * 根据class类型读取object类型数据
      * @param cls object class
      * @return object
      * @throws IOException if an I/O error occurs
@@ -45,9 +46,9 @@ public interface ObjectInput extends DataInput {
 
     /**
      * read object
-     *
+     * 读取object类型数据
      * @param cls object class
-     * @param type object type
+     * @param type object type 泛型
      * @return object
      * @throws IOException if an I/O error occurs
      * @throws ClassNotFoundException if an ClassNotFoundException occurs
