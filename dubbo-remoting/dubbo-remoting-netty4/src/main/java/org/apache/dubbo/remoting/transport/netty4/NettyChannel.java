@@ -39,6 +39,7 @@ final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
 
+    //Map<Netty对应的channel类，dubbo封装的NettyChannel>
     private static final ConcurrentMap<Channel, NettyChannel> channelMap = new ConcurrentHashMap<Channel, NettyChannel>();
 
     private final Channel channel;
@@ -108,6 +109,7 @@ final class NettyChannel extends AbstractChannel {
                 throw cause;
             }
         } catch (Throwable e) {
+            //封装发送请求
             throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
         }
 

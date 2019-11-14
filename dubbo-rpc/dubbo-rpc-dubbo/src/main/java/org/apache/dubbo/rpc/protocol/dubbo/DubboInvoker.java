@@ -68,31 +68,46 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
 
     @Override
     protected Result doInvoke(final Invocation invocation) throws Throwable {
+        // rpc会话域
         RpcInvocation inv = (RpcInvocation) invocation;
+        // 获得方法名
         final String methodName = RpcUtils.getMethodName(invocation);
+        // 把path放入到附加值中
         inv.setAttachment(Constants.PATH_KEY, getUrl().getPath());
+        // 把版本号放入到附加值
         inv.setAttachment(Constants.VERSION_KEY, version);
 
+        // 当前的客户端
         ExchangeClient currentClient;
+        // 如果数组内就一个客户端，则直接取出
         if (clients.length == 1) {
             currentClient = clients[0];
         } else {
+            // 取模轮询 从数组中取，当取到最后一个时，从头开始
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
         try {
+            // 是否是单向发送
             boolean isAsync = RpcUtils.isAsync(getUrl(), invocation);
             boolean isAsyncFuture = RpcUtils.isReturnTypeFuture(inv);
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
             int timeout = getUrl().getMethodParameter(methodName, Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
             if (isOneway) {
+                // // 是否等待消息发送，默认不等待消息发出，将消息放入 IO 队列，即刻返回。
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
+                // 单向发送只负责发送消息，不等待服务端应答，所以没有返回值
                 currentClient.send(inv, isSent);
+                // 设置future为null，因为单向发送没有返回值
                 RpcContext.getContext().setFuture(null);
+                //返回一个默认的rpc结果
                 return new RpcResult();
             } else if (isAsync) {
+                // 异步调用，返回ResponseFuture类型的future
                 ResponseFuture future = currentClient.request(inv, timeout);
                 // For compatibility
+                //使用 adaptor将 ResponseFuture转换为 CompletableFuture形式
                 FutureAdapter<Object> futureAdapter = new FutureAdapter<>(future);
+                //设置到上下文中
                 RpcContext.getContext().setFuture(futureAdapter);
 
                 Result result;
@@ -104,6 +119,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 }
                 return result;
             } else {
+                //同步调用
                 RpcContext.getContext().setFuture(null);
                 return (Result) currentClient.request(inv, timeout).get();
             }

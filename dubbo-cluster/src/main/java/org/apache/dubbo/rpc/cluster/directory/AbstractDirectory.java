@@ -68,7 +68,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         }
 
         if (url.getProtocol().equals(Constants.REGISTRY_PROTOCOL)) {
-            //将覆盖规则
+            //取出消费端的 配置
             Map<String, String> queryMap = StringUtils.parseQueryString(url.getParameterAndDecoded(Constants.REFER_KEY));
             //将 refer 参数解析为 键值对 并设置到 url中
             this.url = url.addParameters(queryMap).removeParameter(Constants.MONITOR_KEY);

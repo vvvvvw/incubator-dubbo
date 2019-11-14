@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * dubbo protocol support class.
  */
+//共享客户端使用，增加了引用计数的功能
 @SuppressWarnings("deprecation")
 final class ReferenceCountExchangeClient implements ExchangeClient {
 

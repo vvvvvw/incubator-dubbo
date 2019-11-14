@@ -24,13 +24,7 @@ import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.common.utils.ArrayUtils;
 import org.apache.dubbo.common.utils.CollectionUtils;
 import org.apache.dubbo.common.utils.NetUtils;
-import org.apache.dubbo.rpc.Invocation;
-import org.apache.dubbo.rpc.Invoker;
-import org.apache.dubbo.rpc.Result;
-import org.apache.dubbo.rpc.RpcContext;
-import org.apache.dubbo.rpc.RpcException;
-import org.apache.dubbo.rpc.RpcInvocation;
-import org.apache.dubbo.rpc.RpcResult;
+import org.apache.dubbo.rpc.*;
 import org.apache.dubbo.rpc.support.RpcUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -159,7 +153,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         RpcInvocation invocation = (RpcInvocation) inv;
         // 会话域中加入该调用链
         invocation.setInvoker(this);
-        // 把附加值放入会话域
+        // 如果把附加值放入会话域
         if (CollectionUtils.isNotEmptyMap(attachment)) {
             invocation.addAttachmentsIfAbsent(attachment);
         }
@@ -185,6 +179,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
             // 执行调用链
             return doInvoke(invocation);
         } catch (InvocationTargetException e) { // biz exception
+            //业务线程执行异常
             Throwable te = e.getTargetException();
             if (te == null) {
                 return new RpcResult(e);
@@ -195,6 +190,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
                 return new RpcResult(te);
             }
         } catch (RpcException e) {
+            //业务异常
             if (e.isBiz()) {
                 return new RpcResult(e);
             } else {

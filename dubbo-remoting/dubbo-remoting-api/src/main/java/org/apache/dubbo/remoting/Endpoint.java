@@ -71,7 +71,7 @@ public interface Endpoint {
      * @param message
      * @param sent    already sent to socket?
      */
-    // 发送消息，sent是否已经发送的标记（多了一个sent的参数，为了区分是否是第一次发送消息）
+    // // sent 是否等待消息发送，默认不等待消息发出，将消息放入 IO 队列，即刻返回。
     void send(Object message, boolean sent) throws RemotingException;
 
     /**

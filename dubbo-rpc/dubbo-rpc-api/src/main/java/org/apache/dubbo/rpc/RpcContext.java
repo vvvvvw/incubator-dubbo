@@ -64,7 +64,7 @@ public class RpcContext {
         }
     };
 
-    //服务上下文
+    //响应上下文
     // FIXME RESPONSE_CONTEXT
     private static final InternalThreadLocal<RpcContext> SERVER_LOCAL = new InternalThreadLocal<RpcContext>() {
         @Override
@@ -76,7 +76,7 @@ public class RpcContext {
 
     private final Map<String, String> attachments = new HashMap<String, String>();
     private final Map<String, Object> values = new HashMap<String, Object>();
-    //线程结果
+    //请求发送后等待结果的future
     private Future<?> future;
 
     //url集合

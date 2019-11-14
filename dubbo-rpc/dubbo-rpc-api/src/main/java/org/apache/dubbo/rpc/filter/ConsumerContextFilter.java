@@ -40,10 +40,11 @@ public class ConsumerContextFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
-        // 设置rpc上下文
+        // // 获得上下文，设置invoker，会话域，本地地址和原创地址
         RpcContext.getContext()
                 .setInvoker(invoker)
                 .setInvocation(invocation)
+                //如果传入的端口为0，在使用该地址绑定时，操作系统会选择一个随机端口
                 .setLocalAddress(NetUtils.getLocalHost(), 0)
                 .setRemoteAddress(invoker.getUrl().getHost(),
                         invoker.getUrl().getPort());
@@ -53,12 +54,12 @@ public class ConsumerContextFilter implements Filter {
             ((RpcInvocation) invocation).setInvoker(invoker);
         }
         try {
-            // todo 清理了服务端上下文？
+            // todo 为什么要清理服务端上下文？
             // TODO should we clear server context?
             RpcContext.removeServerContext();
             return invoker.invoke(invocation);
         } finally {
-            // todo 清理了attachment？
+            // todo 为什么要清理attachment？
             // TODO removeContext? but we need to save future for RpcContext.getFuture() API. If clear attachments here, attachments will not available when postProcessResult is invoked.
             RpcContext.getContext().clearAttachments();
         }
@@ -66,6 +67,7 @@ public class ConsumerContextFilter implements Filter {
 
     @Override
     public Result onResponse(Result result, Invoker<?> invoker, Invocation invocation) {
+        // 将响应上下文中的attachment设置到ServerContext中
         RpcContext.getServerContext().setAttachments(result.getAttachments());
         return result;
     }

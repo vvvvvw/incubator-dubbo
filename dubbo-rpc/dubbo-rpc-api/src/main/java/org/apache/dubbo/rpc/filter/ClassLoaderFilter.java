@@ -31,7 +31,7 @@ import org.apache.dubbo.rpc.RpcException;
 @Activate(group = Constants.PROVIDER, order = -30000)
 public class ClassLoaderFilter implements Filter {
 
-    //先切换成当前的线程锁携带的类加载器，然后调用结束后，再切换回原先的类加载器。
+    //先切换成当前的invoker携带的类加载器，然后调用结束后，再切换回原先的类加载器。
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         // 获得当前的类加载器

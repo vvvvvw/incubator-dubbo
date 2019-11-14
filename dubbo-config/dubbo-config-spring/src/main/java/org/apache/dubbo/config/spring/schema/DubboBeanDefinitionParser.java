@@ -74,17 +74,21 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();
         beanDefinition.setBeanClass(beanClass);
         beanDefinition.setLazyInit(false);
+        // bean name:优先级 id>name
         String id = element.getAttribute("id");
         if (StringUtils.isEmpty(id) && required) {
             String generatedBeanName = element.getAttribute("name");
             if (StringUtils.isEmpty(generatedBeanName)) {
                 if (ProtocolConfig.class.equals(beanClass)) {
+                    //如果是解析 protocol，使用dubbo作为生成的bean的名字
                     generatedBeanName = "dubbo";
                 } else {
+                    //否则使用 interface属性
                     generatedBeanName = element.getAttribute("interface");
                 }
             }
             if (StringUtils.isEmpty(generatedBeanName)) {
+                //如果还是不行，直接使用 beanClass的类名
                 generatedBeanName = beanClass.getName();
             }
             id = generatedBeanName;

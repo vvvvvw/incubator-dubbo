@@ -20,16 +20,20 @@ import org.apache.dubbo.demo.DemoService;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.concurrent.CountDownLatch;
+
 public class Application {
     /**
      * In order to make sure multicast registry works, need to specify '-Djava.net.preferIPv4Stack=true' before
      * launch the application
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("spring/dubbo-consumer.xml");
         context.start();
         DemoService demoService = context.getBean("demoService", DemoService.class);
         String hello = demoService.sayHello("world");
         System.out.println("result: " + hello);
+        CountDownLatch latch = new CountDownLatch(1);
+        latch.await();
     }
 }

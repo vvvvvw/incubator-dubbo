@@ -86,10 +86,12 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
         try {
             // 调用了抽象方法doInvoke
             Object obj = doInvoke(proxy, invocation.getMethodName(), invocation.getParameterTypes(), invocation.getArguments());
+            // TODO: future_returntype的标识会从客户端传递到服务端么？如果传递的话岂不是服务端返回的也是这个CompletableFuture  by 15258 2019/6/6 7:27
             if (RpcUtils.isReturnTypeFuture(invocation)) {
                 //如果是异步调用方式，返回异步对象
                 return new AsyncRpcResult((CompletableFuture<Object>) obj);
             } else if (rpcContext.isAsyncStarted()) { // ignore obj in case of RpcContext.startAsync()? always rely on user to write back.
+                // TODO: 这个是什么  by 15258 2019/6/6 7:29
                 return new AsyncRpcResult(((AsyncContextImpl)(rpcContext.getAsyncContext())).getInternalFuture());
             } else {
                 return new RpcResult(obj);

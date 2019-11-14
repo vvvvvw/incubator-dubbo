@@ -178,7 +178,7 @@ public class RpcUtils {
         return invocation.getParameterTypes();
     }
 
-    //是否是异步调用
+    //根据 ASYNC_KEY 判断 是否是异步调用
     public static boolean isAsync(URL url, Invocation inv) {
         boolean isAsync;
         if (Boolean.TRUE.toString().equals(inv.getAttachment(Constants.ASYNC_KEY))) {
@@ -198,6 +198,7 @@ public class RpcUtils {
         return CompletableFuture.class.isAssignableFrom(method.getReturnType());
     }
 
+    //是否需要返回值
     public static boolean isOneway(URL url, Invocation inv) {
         boolean isOneway;
         if (Boolean.FALSE.toString().equals(inv.getAttachment(Constants.RETURN_KEY))) {

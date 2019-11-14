@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * TraceFilter
  */
+//增强的功能是通道的跟踪，会在通道内把最大的调用次数和现在的调用数量放进去。方便使用telnet来跟踪服务的调用次数等
 @Activate(group = Constants.PROVIDER)
 public class TraceFilter implements Filter {
 

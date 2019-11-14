@@ -75,7 +75,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     /**
      * The {@link Protocol} implementation with adaptive functionality,it will be different in different scenarios.
-     * A particular {@link Protocol} implementation is determined by the protocol attribute in the {@link URL}.
+     * A particular {@link Protocol} implemenation is determined by the protocol attribute in the {@link URL}.
      * For example:
      *
      * <li>when the url is registry://224.5.6.7:1234/org.apache.dubbo.registry.RegistryService?application=dubbo-sample,
@@ -713,16 +713,23 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         this.urls.add(url);
     }
 
+    //导出本地执行的是ServiceConfig中的exportLocal()方法。
+    //本地暴露调用的是injvm协议方法，也就是InjvmProtocol 的 export()方法
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
+        // 如果协议不是injvm
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+            // 生成本地的url,分别把协议改为injvm，设置host和port
             URL local = URLBuilder.from(url)
                     .setProtocol(Constants.LOCAL_PROTOCOL)
                     .setHost(LOCALHOST_VALUE)
                     .setPort(0)
                     .build();
+            // 通过代理工程创建invoker
+            // 再调用export方法进行暴露服务，生成Exporter
             Exporter<?> exporter = protocol.export(
                     proxyFactory.getInvoker(ref, (Class) interfaceClass, local));
+            // 把生成的暴露者加入集合
             exporters.add(exporter);
             logger.info("Export dubbo service " + interfaceClass.getName() + " to local registry");
         }

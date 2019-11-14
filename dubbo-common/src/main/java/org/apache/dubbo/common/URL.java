@@ -1331,6 +1331,7 @@ class URL implements Serializable {
         return buildKey(inf, getParameter(Constants.GROUP_KEY), getParameter(Constants.VERSION_KEY));
     }
 
+    // path/group:version
     public static String buildKey(String path, String group, String version) {
         StringBuilder buf = new StringBuilder();
         if (group != null && group.length() > 0) {

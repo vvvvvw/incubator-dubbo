@@ -37,6 +37,7 @@ import static org.apache.dubbo.common.Constants.REMOTE_APPLICATION_KEY;
  *
  * @see RpcContext
  */
+//初始化rpc上下文,新增了tag路由的相关逻辑
 @Activate(group = Constants.PROVIDER, order = -10000)
 public class ContextFilter implements Filter {
 

@@ -137,6 +137,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         req.setTwoWay(true);
         // 把请求数据传入
         req.setData(request);
+        //生成了需要的future。异步请求结果就是从这个future中获取
         // 创建DefaultFuture对象，可以从future中主动获得请求对应的响应信息
         DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout);
         try {

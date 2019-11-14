@@ -33,6 +33,7 @@ public class ConsumerModel {
     private final String serviceName;
     private final Class<?> serviceInterfaceClass;
 
+    //Map<方法名，ConsumerMethodModel>
     private final Map<Method, ConsumerMethodModel> methodModels = new IdentityHashMap<Method, ConsumerMethodModel>();
 
     /**

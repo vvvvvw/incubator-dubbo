@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * MonitorFilter. (SPI, Singleton, ThreadSafe)
  */
+//在invoke里面只是做了记录开始监控的时间以及对同时监控的数量加1操作，
+// 当结果回调时，会对结果数据做搜集计算，最后通过监控服务记录和发送最新信息
 @Activate(group = {Constants.PROVIDER, Constants.CONSUMER})
 public class MonitorFilter implements Filter {
 
@@ -48,6 +50,7 @@ public class MonitorFilter implements Filter {
     /**
      * The Concurrent counter
      */
+    //Map<接口类名+:+方法名    :>
     private final ConcurrentMap<String, AtomicInteger> concurrents = new ConcurrentHashMap<String, AtomicInteger>();
 
     /**
@@ -69,19 +72,25 @@ public class MonitorFilter implements Filter {
      */
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 如果开启监控
         if (invoker.getUrl().hasParameter(Constants.MONITOR_KEY)) {
             RpcContext context = RpcContext.getContext(); // provider must fetch context before invoke() gets called
             String remoteHost = context.getRemoteHost();
+            // 设置监控开始时间
             long start = System.currentTimeMillis(); // record start timestamp
+            // 获得当前的调用数，并且增加
             getConcurrent(invoker, invocation).incrementAndGet(); // count up
             try {
                 Result result = invoker.invoke(invocation); // proceed invocation chain
+                // 执行监控，搜集数据
                 collect(invoker, invocation, result, remoteHost, start, false);
                 return result;
             } catch (RpcException e) {
+                // 执行监控，搜集数据
                 collect(invoker, invocation, null, remoteHost, start, true);
                 throw e;
             } finally {
+                // 减少当前调用数
                 getConcurrent(invoker, invocation).decrementAndGet(); // count down
             }
         } else {
@@ -101,12 +110,16 @@ public class MonitorFilter implements Filter {
      */
     private void collect(Invoker<?> invoker, Invocation invocation, Result result, String remoteHost, long start, boolean error) {
         try {
+            // 获得监控的url
             URL monitorUrl = invoker.getUrl().getUrlParameter(Constants.MONITOR_KEY);
+            // 通过该url获得Monitor实例
             Monitor monitor = monitorFactory.getMonitor(monitorUrl);
             if (monitor == null) {
                 return;
             }
+            // 创建一个统计的url
             URL statisticsURL = createStatisticsUrl(invoker, invocation, result, remoteHost, start, error);
+            // 把收集的信息更新并且发送信息
             monitor.collect(statisticsURL);
         } catch (Throwable t) {
             logger.warn("Failed to monitor count service " + invoker.getUrl() + ", cause: " + t.getMessage(), t);
@@ -125,26 +138,39 @@ public class MonitorFilter implements Filter {
      * @return
      */
     private URL createStatisticsUrl(Invoker<?> invoker, Invocation invocation, Result result, String remoteHost, long start, boolean error) {
+        // 调用服务消耗的时间
         // ---- service statistics ----
         long elapsed = System.currentTimeMillis() - start; // invocation cost
+        // 获得同时监控的数量
         int concurrent = getConcurrent(invoker, invocation).get(); // current concurrent count
         String application = invoker.getUrl().getParameter(Constants.APPLICATION_KEY);
+        // 获得服务名
         String service = invoker.getInterface().getName(); // service name
+        // 获得调用的方法名
         String method = RpcUtils.getMethodName(invocation); // method name
+        // 获得组
         String group = invoker.getUrl().getParameter(Constants.GROUP_KEY);
+        // 获得版本号
         String version = invoker.getUrl().getParameter(Constants.VERSION_KEY);
 
         int localPort;
         String remoteKey, remoteValue;
+        // 如果是消费者端的监控
         if (Constants.CONSUMER_SIDE.equals(invoker.getUrl().getParameter(Constants.SIDE_KEY))) {
             // ---- for service consumer ----
+            // 本地端口为0
             localPort = 0;
+            // key为provider
             remoteKey = MonitorService.PROVIDER;
+            // value为服务ip
             remoteValue = invoker.getUrl().getAddress();
         } else {
             // ---- for service provider ----
+            // 端口为服务端口
             localPort = invoker.getUrl().getPort();
+            // key为consumer
             remoteKey = MonitorService.CONSUMER;
+            // value为远程地址
             remoteValue = remoteHost;
         }
         String input = "", output = "";
@@ -155,6 +181,7 @@ public class MonitorFilter implements Filter {
             output = result.getAttachment(Constants.OUTPUT_KEY);
         }
 
+        // 返回一个url
         return new URL(Constants.COUNT_PROTOCOL,
                 NetUtils.getLocalHost(), localPort,
                 service + Constants.PATH_SEPARATOR + method,
@@ -171,6 +198,7 @@ public class MonitorFilter implements Filter {
                 Constants.VERSION_KEY, version);
     }
 
+    //获得当前的计数器
     // concurrent counter
     private AtomicInteger getConcurrent(Invoker<?> invoker, Invocation invocation) {
         String key = invoker.getInterface().getName() + "." + invocation.getMethodName();

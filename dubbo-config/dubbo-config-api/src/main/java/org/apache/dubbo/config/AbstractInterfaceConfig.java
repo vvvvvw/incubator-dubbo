@@ -328,7 +328,9 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     for (URL url : urls) {
                         // 将 URL 协议头设置为 registry
                         url = URLBuilder.from(url)
+                                //todo 注册中心使用的协议设置到参数中，在 registryProtocol中会拿出来
                                 .addParameter(Constants.REGISTRY_KEY, url.getProtocol())
+                                //todo 设置为 registry协议，之后会先调用 registry协议
                                 .setProtocol(Constants.REGISTRY_PROTOCOL)
                                 .build();
                         /*

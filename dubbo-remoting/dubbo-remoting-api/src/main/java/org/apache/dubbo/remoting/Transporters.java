@@ -55,6 +55,7 @@ public class Transporters {
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
+            // 如果 handlers 元素数量大于1，则创建 ChannelHandler 分发器
             handler = new ChannelHandlerDispatcher(handlers);
         }
         // 调用Transporter的实现类对象的bind方法。

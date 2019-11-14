@@ -43,6 +43,7 @@ public class ApplicationModel {
     /**
      * full qualified class name -> subscribe service
      */
+    //Map<服务名，ConsumerModel>
     private static final ConcurrentMap<String, ConsumerModel> consumedServices = new ConcurrentHashMap<>();
 
     private static String application;

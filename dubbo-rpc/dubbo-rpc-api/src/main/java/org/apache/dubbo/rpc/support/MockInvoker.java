@@ -89,12 +89,13 @@ final public class MockInvoker<T> implements Invoker<T> {
             // 是map类型的
             value = JSON.parseObject(mock, Map.class);
         } else if (mock.startsWith("[")) {
-            // 是数组类型
+            // 是列表类型
             value = JSON.parseObject(mock, List.class);
         } else {
             value = mock;
         }
         if (ArrayUtils.isNotEmpty(returnTypes)) {
+            //数组类型
             value = PojoUtils.realize(value, (Class<?>) returnTypes[0], returnTypes.length > 1 ? returnTypes[1] : null);
         }
         return value;

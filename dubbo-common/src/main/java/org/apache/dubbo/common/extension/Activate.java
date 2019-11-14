@@ -106,7 +106,7 @@ public @interface Activate {
      * @return absolute ordering info
      */
     /**
-     * 绝对排序信息，可以不提供。
+     * 绝对排序信息，可以不提供。order越小越提前执行
      */
     int order() default 0;
 }

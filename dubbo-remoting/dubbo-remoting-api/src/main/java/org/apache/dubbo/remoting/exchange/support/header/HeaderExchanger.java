@@ -34,12 +34,22 @@ public class HeaderExchanger implements Exchanger {
 
     public static final String NAME = "header";
 
+    // 创建 HeaderExchangeHandler 对象
+    // 创建 DecodeHandler 对象
+    // 通过 Transporters 构建 Client 实例
+    // 创建 HeaderExchangeClient 对象
     @Override
     public ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         // 用传输层连接返回的client 创建对应的信息交换客户端，默认开启心跳检测
         return new HeaderExchangeClient(Transporters.connect(url, new DecodeHandler(new HeaderExchangeHandler(handler))), true);
     }
 
+    /*
+    创建HeaderExchangeHandler
+    创建DecodeHandler
+    Transporters.bind()，创建服务器实例。
+    创建HeaderExchangeServer
+     */
     @Override
     public ExchangeServer bind(URL url, ExchangeHandler handler) throws RemotingException {
         // 用传输层绑定返回的server 创建对应的信息交换服务端

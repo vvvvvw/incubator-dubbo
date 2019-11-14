@@ -95,6 +95,7 @@ public class Constants {
 
     public static final String DEFAULT_DUBBO_PROPERTIES = "dubbo.properties";
 
+    // // // 是否等待消息发送，默认不等待消息发出，将消息放入 IO 队列，即刻返回。
     public static final String SENT_KEY = "sent";
 
     public static final boolean DEFAULT_SENT = false;
@@ -164,6 +165,7 @@ public class Constants {
      */
     public static final String DEFAULT_SHARE_CONNECTIONS = "1";
 
+    //如果是共享客户端，共享连接数
     public static final String SHARE_CONNECTIONS_KEY = "shareconnections";
 
     public static final int DEFAULT_ACCEPTS = 0;
@@ -220,6 +222,7 @@ public class Constants {
 
     public static final String CLUSTER_KEY = "cluster";
 
+    //服务端：使用哪种注册中心
     public static final String REGISTRY_KEY = "registry";
 
     public static final String METADATA_REPORT_KEY = "metadata";
@@ -227,7 +230,7 @@ public class Constants {
     //服务端:监视器url
     public static final String MONITOR_KEY = "monitor";
 
-    //客户端还是服务端 value:client 客户端 server:服务端
+    //客户端还是服务端 value:client consumer  server:producer
     public static final String SIDE_KEY = "side";
 
     public static final String PROVIDER_SIDE = "provider";
@@ -311,10 +314,12 @@ public class Constants {
     //包最大长度
     public static final String PAYLOAD_KEY = "payload";
 
+    //客户端发送请求的filter
     public static final String REFERENCE_FILTER_KEY = "reference.filter";
 
     public static final String INVOKER_LISTENER_KEY = "invoker.listener";
 
+    //服务端处理请求的filter
     public static final String SERVICE_FILTER_KEY = "service.filter";
 
     public static final String EXPORTER_LISTENER_KEY = "exporter.listener";
@@ -324,6 +329,7 @@ public class Constants {
     // 客户端 方法级别 限制同一个方法最大可并行执行请求数
     public static final String ACTIVES_KEY = "actives";
 
+    //连接数，如果为0表示使用共享连接，否则一个服务一个连接
     public static final String CONNECTIONS_KEY = "connections";
 
     public static final String ACCEPTS_KEY = "accepts";
@@ -358,7 +364,7 @@ public class Constants {
 
     public static final String CONNECT_TIMEOUT_KEY = "connect.timeout";
 
-    //超时时间
+    //调用 超时时间
     public static final String TIMEOUT_KEY = "timeout";
 
     public static final String RETRIES_KEY = "retries";
@@ -378,6 +384,7 @@ public class Constants {
 
     public static final String KEEP_ALIVE_KEY = "keepalive";
 
+    //序列化方式
     public static final String OPTIMIZER_KEY = "optimizer";
 
     public static final String EXCHANGER_KEY = "exchanger";
@@ -392,7 +399,7 @@ public class Constants {
 
     public static final String ID_KEY = "id";
 
-    //是否异步调用 value:true/false
+    //是否异步调用 value:true/false 类型: string
     public static final String ASYNC_KEY = "async";
 
     public static final String FUTURE_GENERATED_KEY = "future_generated";
@@ -401,6 +408,7 @@ public class Constants {
 
     public static final String ASYNC_SUFFIX = "Async";
 
+    //是否需要返回值，是否是oneway模式
     public static final String RETURN_KEY = "return";
 
     // TODO: token的作用  by 15258 2019/6/4 7:55
@@ -409,7 +417,7 @@ public class Constants {
 
     public static final String METHOD_KEY = "method";
 
-    //服务端: 发布接口的方法名集合，“，”分隔，如果接口没有方法，设置为*
+    //服务端: 发布接口的方法名集合，“，”分隔，如果接口没有方法，设置为* 客户端：引用的接口的方法名集合
     public static final String METHODS_KEY = "methods";
 
     //字符集
@@ -448,6 +456,7 @@ public class Constants {
 
     public static final String PATH_KEY = "path";
 
+    //服务接口名称
     public static final String INTERFACE_KEY = "interface";
 
     //需要代理的接口，逗号分隔
@@ -467,7 +476,7 @@ public class Constants {
     //服务版本号
     public static final String VERSION_KEY = "version";
 
-    //服务发布的版本号
+    //服务发布的版本号 调用的服务版本号
     public static final String REVISION_KEY = "revision";
 
     public static final String DUBBO_VERSION_KEY = "dubbo";
@@ -509,6 +518,7 @@ public class Constants {
 
     public static final int DEFAULT_CONNECT_QUEUE_WARNING_SIZE = 1000;
 
+    //通道只读属性
     public static final String CHANNEL_ATTRIBUTE_READONLY_KEY = "channel.readonly";
 
     public static final String CHANNEL_READONLYEVENT_SENT_KEY = "channel.readonly.sent";
@@ -645,12 +655,13 @@ public class Constants {
     /**
      * The key name for export URL in register center
      */
-    //服务端: 注册中心url，value为服务类的url
+    //服务端: 注册中心url中设置的参数，value为服务类的url
     public static final String EXPORT_KEY = "export";
 
     /**
      * The key name for reference URL in register center
      */
+    //客户端配置：引用的服务的各种属性，包括接口名等等
     public static final String REFER_KEY = "refer";
 
     /**
@@ -790,6 +801,7 @@ public class Constants {
 
     public static final String BIND_PORT_KEY = "bind.port";
 
+    // 客户端设置：设置消费者ip
     public static final String REGISTER_IP_KEY = "register.ip";
 
     public static final String QOS_ENABLE = "qos.enable";

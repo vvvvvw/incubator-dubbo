@@ -26,6 +26,7 @@ import static org.apache.dubbo.common.extension.ExtensionLoader.getExtensionLoad
 /**
  * Dynamic configuration
  */
+//动态配置
 public interface DynamicConfiguration extends Configuration {
     String DEFAULT_GROUP = "dubbo";
 

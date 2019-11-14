@@ -60,7 +60,7 @@ public class InvokerInvocationHandler implements InvocationHandler {
             return invoker.equals(args[0]);
         }
 
-        // rpc调用
+        // rpc调用，先创建调用上下文
         return invoker.invoke(createInvocation(method, args)).recreate();
     }
 

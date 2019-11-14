@@ -45,7 +45,7 @@ public class RpcInvocation implements Invocation, Serializable {
     //参数集合
     private Object[] arguments;
 
-    //附加参数
+    //附加参数，请求上下文
     private Map<String, String> attachments;
 
     //实体域

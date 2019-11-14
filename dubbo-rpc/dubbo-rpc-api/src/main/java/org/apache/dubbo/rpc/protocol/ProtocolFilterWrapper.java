@@ -85,9 +85,11 @@ public class ProtocolFilterWrapper implements Protocol {
                         Result result = filter.invoke(next, invocation);
                         if (result instanceof AsyncRpcResult) {
                             AsyncRpcResult asyncResult = (AsyncRpcResult) result;
+                            // 如果结果是AsyncRpcResult类型，则调用回调方法onResponse
                             asyncResult.thenApplyWithContext(r -> filter.onResponse(r, invoker, invocation));
                             return asyncResult;
                         } else {
+                            // 否则，直接调用filter的onResponse，做兼容。
                             return filter.onResponse(result, invoker, invocation);
                         }
                     }

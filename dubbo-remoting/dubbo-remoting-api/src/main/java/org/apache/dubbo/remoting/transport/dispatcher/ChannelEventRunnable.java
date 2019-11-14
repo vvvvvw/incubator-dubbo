@@ -21,6 +21,7 @@ import org.apache.dubbo.common.logger.LoggerFactory;
 import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.ChannelHandler;
 
+//ChannelEventRunnable实现了Runnable接口，主要是用来接收消息事件，并且根据事件的种类来分别执行不同的操作
 public class ChannelEventRunnable implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(ChannelEventRunnable.class);
 
@@ -52,8 +53,12 @@ public class ChannelEventRunnable implements Runnable {
 
     @Override
     public void run() {
+        //把消息分为了几种类别，因为请求和响应消息出现频率明显比其他类型消息高，
+        // 也就是RECEIVED，所以单独先做处理，根据不同的类型的消息，会被执行不同的逻辑
+        // 如果是接收的消息
         if (state == ChannelState.RECEIVED) {
             try {
+                // 直接调用下一个received
                 handler.received(channel, message);
             } catch (Exception e) {
                 logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
@@ -61,30 +66,38 @@ public class ChannelEventRunnable implements Runnable {
             }
         } else {
             switch (state) {
+                //如果是连接事件请求
             case CONNECTED:
                 try {
+                    // 执行连接
                     handler.connected(channel);
                 } catch (Exception e) {
                     logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel, e);
                 }
                 break;
+                // 如果是断开连接事件请求
             case DISCONNECTED:
                 try {
+                    // 执行断开连接
                     handler.disconnected(channel);
                 } catch (Exception e) {
                     logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel, e);
                 }
                 break;
+                // 如果是发送消息
             case SENT:
                 try {
+                    // 执行发送消息
                     handler.sent(channel, message);
                 } catch (Exception e) {
                     logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
                             + ", message is " + message, e);
                 }
                 break;
+                // 如果是异常
             case CAUGHT:
                 try {
+                    // 执行异常捕获
                     handler.caught(channel, exception);
                 } catch (Exception e) {
                     logger.warn("ChannelEventRunnable handle " + state + " operation error, channel is " + channel
@@ -123,6 +136,7 @@ public class ChannelEventRunnable implements Runnable {
         /**
          * RECEIVED
          */
+        //请求消息
         RECEIVED,
 
         /**

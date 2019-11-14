@@ -232,7 +232,7 @@ public class ExtensionLoader<T> {
      * @return extension list which are activated
      * @see org.apache.dubbo.common.extension.Activate
      */
-    //获得符合自动激活条件的扩展实现类对象集合 todo values中的取值不要中划线
+    //获得符合自动激活条件的扩展实现类对象集合 todo values中的取值不要中划线 显示配置的扩展和自动激活的扩展同时都配置了同
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> exts = new ArrayList<>();
         List<String> names = values == null ? new ArrayList<>(0) : Arrays.asList(values);
@@ -244,6 +244,8 @@ public class ExtensionLoader<T> {
          *  同时url的参数中包含非空键值对，key为实现类的@Activate注解中指定的value中的一个
          */
         //例如，<dubbo:service filter="-default" /> ，代表移除所有默认过滤器。
+
+        //如果不包含 -default，则首先获取所有可自动激活的对象
         if (!names.contains(Constants.REMOVE_VALUE_PREFIX + Constants.DEFAULT_KEY)) {
             //获得扩展实现类数组，把扩展实现类放到 cachedClasses 中
             getExtensionClasses();

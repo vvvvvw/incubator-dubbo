@@ -60,6 +60,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url);
+        // 获得所有url地址
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }

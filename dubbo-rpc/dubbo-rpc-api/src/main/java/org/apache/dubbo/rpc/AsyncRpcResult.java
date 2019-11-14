@@ -28,6 +28,8 @@ import java.util.function.Function;
  * <b>NOTICE!!</b>
  *
  * <p>
+ *   在使用或扩展Dubbo时，您不应该直接依赖此类，{@link AsyncRpcResult}的实现仅是兼容性的解决方法。 它可能会被更改，
+ *   甚至会从下一个主要版本中删除。 请仅使用{@link Result}或{@link RpcResult}
  * You should never rely on this class directly when using or extending Dubbo, the implementation of {@link AsyncRpcResult}
  * is only a workaround for compatibility purpose. It may be changed or even get removed from the next major version.
  * Please only use {@link Result} or {@link RpcResult}.
@@ -62,7 +64,9 @@ public class AsyncRpcResult extends AbstractResult {
      * RpcContext can be changed, because thread may have been used by other thread. It should be cloned before store.
      * So we use Invocation instead, Invocation will create for every invoke, but invocation only support attachments of string type.
      */
+    //复制的请求上下文
     private RpcContext storedContext;
+    //原始的响应上下文
     private RpcContext storedServerContext;
 
     protected CompletableFuture<Object> valueFuture;
@@ -105,6 +109,7 @@ public class AsyncRpcResult extends AbstractResult {
                     rpcResult = new RpcResult(v);
                 }
                 // instead of resultFuture we must use rFuture here, resultFuture may being changed before complete when building filter chain, but rFuture was guaranteed never changed by closure.
+                //将rpcResult设置到 CompletableFuture的result字段
                 rFuture.complete(rpcResult);
             });
         }

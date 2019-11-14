@@ -88,6 +88,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
         }
     }
 
+    //先从缓存中取，如果没有命中，则创建注册中心实例
     @Override
     public Registry getRegistry(URL url) {
         // 修改url

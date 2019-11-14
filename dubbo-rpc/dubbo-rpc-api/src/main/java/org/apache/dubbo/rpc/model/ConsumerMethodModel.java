@@ -92,21 +92,33 @@ public class ConsumerMethodModel {
 
     public static class AsyncMethodInfo {
         // callback instance when async-call is invoked
+        //请求远程服务之前的回调方法的对象，调用参数使用 传给远程服务使用的参数
         private Object oninvokeInstance;
 
         // callback method when async-call is invoked
+        //请求远程服务之前的回调方法，调用参数使用 传给远程服务使用的参数
         private Method oninvokeMethod;
 
         // callback instance when async-call is returned
+        //请求远程服务之后正常返回的回调方法的对象
         private Object onreturnInstance;
 
         // callback method when async-call is returned
+        //请求远程服务之后正常返回的回调方法，参数为 返回值
+        //如果只有一个参数，则第一个参数为 返回结果
+        //如果只有两个参数，且第二个参数是 Object[]类型，则将 返回结果赋给第一个参数，args赋给 第二个参数
+        //否则，第一个参数为返回结果，后面依次赋值参数
         private Method onreturnMethod;
 
         // callback instance when async-call has exception thrown
+        //请求远程服务之前回调方法执行异常或者 请求远程服务异常的回调方法的对象
         private Object onthrowInstance;
 
         // callback method when async-call has exception thrown
+        //请求远程服务之前回调方法执行异常或者 请求远程服务异常的回调方法，第一个参数需要是 抛出的异常类型
+        //如果只有一个参数，则第一个参数为 抛出的异常
+        //如果只有两个参数，且第二个参数是 Object[]类型，则将 异常赋给第一个参数，args赋给 第二个参数
+        //否则，第一个参数为异常类型，后面依次赋值参数
         private Method onthrowMethod;
 
         public Object getOninvokeInstance() {

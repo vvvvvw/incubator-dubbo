@@ -36,6 +36,7 @@ import java.lang.reflect.Method;
 /**
  * EventFilter
  */
+//回调方法filter
 @Activate(group = Constants.CONSUMER)
 public class FutureFilter implements Filter {
 
@@ -43,6 +44,7 @@ public class FutureFilter implements Filter {
 
     @Override
     public Result invoke(final Invoker<?> invoker, final Invocation invocation) throws RpcException {
+        // 该方法是真正的调用方法的执行
         fireInvokeCallback(invoker, invocation);
         // need to configure if there's return value before the invocation in order to help invoker to judge if it's
         // necessary to return future.
@@ -64,10 +66,14 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //同步回调
     private void syncCallback(final Invoker<?> invoker, final Invocation invocation, final Result result) {
+        // 如果有异常
         if (result.hasException()) {
+            // 则调用异常的结果处理
             fireThrowCallback(invoker, invocation, result.getException());
         } else {
+            // 调用正常的结果处理
             fireReturnCallback(invoker, invocation, result.getValue());
         }
     }
@@ -80,12 +86,15 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //请求之前 回调方法，如果出现异常，则调用 异常回调方法
     private void fireInvokeCallback(final Invoker<?> invoker, final Invocation invocation) {
         final ConsumerMethodModel.AsyncMethodInfo asyncMethodInfo = getAsyncMethodInfo(invoker, invocation);
         if (asyncMethodInfo == null) {
             return;
         }
+        // 获得在真实调用远程服务之前回调的方法
         final Method onInvokeMethod = asyncMethodInfo.getOninvokeMethod();
+        // 获得在真实调用远程服务之前回调的对象
         final Object onInvokeInst = asyncMethodInfo.getOninvokeInstance();
 
         if (onInvokeMethod == null && onInvokeInst == null) {
@@ -94,12 +103,15 @@ public class FutureFilter implements Filter {
         if (onInvokeMethod == null || onInvokeInst == null) {
             throw new IllegalStateException("service:" + invoker.getUrl().getServiceKey() + " has a oninvoke callback config , but no such " + (onInvokeMethod == null ? "method" : "instance") + " found. url:" + invoker.getUrl());
         }
+        // 如果不可以访问，则设置为可访问
         if (!onInvokeMethod.isAccessible()) {
             onInvokeMethod.setAccessible(true);
         }
 
+        // 获得参数数组
         Object[] params = invocation.getArguments();
         try {
+            // 调用方法
             onInvokeMethod.invoke(onInvokeInst, params);
         } catch (InvocationTargetException e) {
             fireThrowCallback(invoker, invocation, e.getTargetException());
@@ -108,6 +120,7 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //正常的请求之后返回结果的处理
     private void fireReturnCallback(final Invoker<?> invoker, final Invocation invocation, final Object result) {
         final ConsumerMethodModel.AsyncMethodInfo asyncMethodInfo = getAsyncMethodInfo(invoker, invocation);
         if (asyncMethodInfo == null) {
@@ -131,21 +144,27 @@ public class FutureFilter implements Filter {
 
         Object[] args = invocation.getArguments();
         Object[] params;
+        // 获得返回结果类型
         Class<?>[] rParaTypes = onReturnMethod.getParameterTypes();
+        // 设置参数和返回结果
         if (rParaTypes.length > 1) {
+            //如果只有两个参数，且第二个参数是 Object[]类型，则将 返回结果赋给第一个参数，args赋给 第二个参数
             if (rParaTypes.length == 2 && rParaTypes[1].isAssignableFrom(Object[].class)) {
                 params = new Object[2];
                 params[0] = result;
                 params[1] = args;
             } else {
+                //否则，第一个参数为返回结果，后面依次赋值参数
                 params = new Object[args.length + 1];
                 params[0] = result;
                 System.arraycopy(args, 0, params, 1, args.length);
             }
         } else {
+            //如果只有一个参数，则第一个参数为 返回结果
             params = new Object[]{result};
         }
         try {
+            // 调用方法
             onReturnMethod.invoke(onReturnInst, params);
         } catch (InvocationTargetException e) {
             fireThrowCallback(invoker, invocation, e.getTargetException());
@@ -154,6 +173,7 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //在请求远程服务之前出现异常的回调方法 或者 请求远程服务异常的回调方法
     private void fireThrowCallback(final Invoker<?> invoker, final Invocation invocation, final Throwable exception) {
         final ConsumerMethodModel.AsyncMethodInfo asyncMethodInfo = getAsyncMethodInfo(invoker, invocation);
         if (asyncMethodInfo == null) {
@@ -173,25 +193,32 @@ public class FutureFilter implements Filter {
         if (!onthrowMethod.isAccessible()) {
             onthrowMethod.setAccessible(true);
         }
+        // 获得抛出异常的类型
         Class<?>[] rParaTypes = onthrowMethod.getParameterTypes();
+        //如果第一个参数是异常
         if (rParaTypes[0].isAssignableFrom(exception.getClass())) {
             try {
                 Object[] args = invocation.getArguments();
                 Object[] params;
 
+                // 把类型和抛出的异常值放入返回结果
                 if (rParaTypes.length > 1) {
                     if (rParaTypes.length == 2 && rParaTypes[1].isAssignableFrom(Object[].class)) {
+                        //如果只有两个参数，且第二个参数是 Object[]类型，则将 异常赋给第一个参数，args赋给 第二个参数
                         params = new Object[2];
                         params[0] = exception;
                         params[1] = args;
                     } else {
+                        //否则，第一个参数为异常类型，后面依次赋值参数
                         params = new Object[args.length + 1];
                         params[0] = exception;
                         System.arraycopy(args, 0, params, 1, args.length);
                     }
                 } else {
+                    //如果只有一个参数，则第一个参数为 抛出的异常
                     params = new Object[]{exception};
                 }
+                // 调用异常回调方法
                 onthrowMethod.invoke(onthrowInst, params);
             } catch (Throwable e) {
                 logger.error(invocation.getMethodName() + ".call back method invoke error . callback method :" + onthrowMethod + ", url:" + invoker.getUrl(), e);
@@ -201,6 +228,7 @@ public class FutureFilter implements Filter {
         }
     }
 
+    //找到回调信息
     private ConsumerMethodModel.AsyncMethodInfo getAsyncMethodInfo(Invoker<?> invoker, Invocation invocation) {
         final ConsumerModel consumerModel = ApplicationModel.getConsumerModel(invoker.getUrl().getServiceKey());
         if (consumerModel == null) {
@@ -209,9 +237,11 @@ public class FutureFilter implements Filter {
 
         String methodName = invocation.getMethodName();
         if (methodName.equals(Constants.$INVOKE)) {
+            //如果是泛化调用，方法名就是第一个参数
             methodName = (String) invocation.getArguments()[0];
         }
 
+        //todo 根据方法名获取第一个方法，会不会有问题
         ConsumerMethodModel methodModel = consumerModel.getMethodModel(methodName);
         if (methodModel == null) {
             return null;
