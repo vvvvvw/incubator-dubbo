@@ -317,7 +317,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 setPath(beanName);
             }
         }
-        if (!supportedApplicationListener) {
+        if (!supportedApplicationListener) { //如果不支持 监听器，则在初始化的时候 就直接导出
             export();
         }
     }

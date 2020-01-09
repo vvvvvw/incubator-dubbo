@@ -116,7 +116,7 @@ public class Constants {
     public static final int DEFAULT_PAYLOAD = 8 * 1024 * 1024;
 
     public static final String DEFAULT_CLUSTER = "failover";
-
+    //默认注册服务就是 远程提供RegistryService
     public static final String DEFAULT_DIRECTORY = "dubbo";
 
     public static final String DEFAULT_LOADBALANCE = "random";
@@ -756,9 +756,9 @@ public class Constants {
 
     //服务暴露的范围 none：不暴露 local:本地 remote:远程
     public static final String SCOPE_KEY = "scope";
-
+    //只导出到本地
     public static final String SCOPE_LOCAL = "local";
-
+    //只导出到远程
     public static final String SCOPE_REMOTE = "remote";
 
     public static final String SCOPE_NONE = "none";

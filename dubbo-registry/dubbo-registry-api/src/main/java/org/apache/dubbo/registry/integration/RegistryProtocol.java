@@ -173,7 +173,6 @@ public class RegistryProtocol implements Protocol {
         Registry registry = registryFactory.getRegistry(registryUrl);
         registry.unregister(registeredProviderUrl);
     }
-
     /*
     从代码上看，我用分割线分成两部分，分别是服务暴露和服务注册。该方法的逻辑大致分为以下几个步骤：
     1.获得服务提供者的url，再通过override数据重新配置url，然后执行doLocalExport()进行服务暴露。
@@ -183,12 +182,13 @@ public class RegistryProtocol implements Protocol {
      */
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
-        // 获得注册中心的url
+        // 获得注册中心的url，以 zookeeper 注册中心为例，得到的示例 URL 如下：
+        // zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F172.17.48.52%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
         //获得已经注册的服务提供者url
+        // dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
         URL providerUrl = getProviderUrl(originInvoker);
-
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
@@ -200,7 +200,7 @@ public class RegistryProtocol implements Protocol {
         // 把监听器添加到集合
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
-        // 根据override的配置来覆盖原来的url，使得配置是最新的。
+        // 根据外部配置覆盖后的提供者url，根据override的配置来覆盖原来的url，
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
         //export invoker
         // 服务暴露
@@ -216,7 +216,7 @@ public class RegistryProtocol implements Protocol {
                 registryUrl, registeredProviderUrl);
         // ————————————————————————————————分割线——————————————————————————————————————
         //to judge if we need to delay publish
-        // 获取 register 参数
+        // 获取 register 参数，判断是否延迟初始化
         boolean register = registeredProviderUrl.getParameter("register", true);
         // 如果需要注册服务
         if (register) {
@@ -452,7 +452,7 @@ public class RegistryProtocol implements Protocol {
         }
         // 创建路由规则链
         directory.buildRouterChain(subscribeUrl);
-        // 订阅 providers、configurators、routers 等节点数据
+        // 订阅 注册中心中的providers、configurators、routers 等节点数据
         directory.subscribe(subscribeUrl.addParameter(CATEGORY_KEY,
                 PROVIDERS_CATEGORY + "," + CONFIGURATORS_CATEGORY + "," + ROUTERS_CATEGORY));
         // 一个注册中心可能有多个服务提供者，因此这里需要将多个服务提供者合并为一个，生成一个invoker
@@ -620,11 +620,13 @@ public class RegistryProtocol implements Protocol {
                 URL overrideUrl = url;
                 // Compatible with the old version
                 if (url.getParameter(CATEGORY_KEY) == null && OVERRIDE_PROTOCOL.equals(url.getProtocol())) {
+                    //兼容老版本
                     overrideUrl = url.addParameter(CATEGORY_KEY, CONFIGURATORS_CATEGORY);
                 }
 
                 // Check whether url is to be applied to the current service
                 if (UrlUtils.isMatch(currentSubscribe, overrideUrl)) {
+                    //是否是同一个服务的配置
                     result.add(url);
                 }
             }
@@ -678,7 +680,7 @@ public class RegistryProtocol implements Protocol {
     /**
      * exporter proxy, establish the corresponding relationship between the returned exporter and the exporter
      * exported by the protocol, and can modify the relationship at the time of override.
-     *
+     * exporter代理，在返回的invoker和协议导出的exporter之间建立对应关系，并可以在覆盖时修改该关系。
      * @param <T>
      */
     private class ExporterChangeableWrapper<T> implements Exporter<T> {
@@ -689,7 +691,7 @@ public class RegistryProtocol implements Protocol {
         private Exporter<T> exporter;
         private URL subscribeUrl;
         private URL registerUrl;
-
+        //此处的exporter已经是 协议导出的了，比如dubbo协议、http协议
         public ExporterChangeableWrapper(Exporter<T> exporter, Invoker<T> originInvoker) {
             this.exporter = exporter;
             this.originInvoker = originInvoker;

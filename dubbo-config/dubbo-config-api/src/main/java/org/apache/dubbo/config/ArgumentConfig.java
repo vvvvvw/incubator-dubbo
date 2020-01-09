@@ -43,7 +43,7 @@ public class ArgumentConfig implements Serializable {
     private String type;
 
     /**
-     * 是否是 callback接口
+     * 是否是 callback接口(参数回调 功能需要使用到，只有callback这个参数会放到url的 parameter中)
      * Whether the argument is the callback interface
      */
     private Boolean callback;

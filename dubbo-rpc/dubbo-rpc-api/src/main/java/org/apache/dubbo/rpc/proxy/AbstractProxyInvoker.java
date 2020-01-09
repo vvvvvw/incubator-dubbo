@@ -91,7 +91,7 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
                 //如果是异步调用方式，返回异步对象
                 return new AsyncRpcResult((CompletableFuture<Object>) obj);
             } else if (rpcContext.isAsyncStarted()) { // ignore obj in case of RpcContext.startAsync()? always rely on user to write back.
-                // TODO: 这个是什么  by 15258 2019/6/6 7:29
+                // TODO: 服务端有异步么？有的话 有什么用？  by 15258 2019/6/6 7:29
                 return new AsyncRpcResult(((AsyncContextImpl)(rpcContext.getAsyncContext())).getInternalFuture());
             } else {
                 return new RpcResult(obj);

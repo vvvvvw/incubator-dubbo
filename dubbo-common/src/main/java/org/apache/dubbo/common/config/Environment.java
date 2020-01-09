@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * TODO load as SPI will be better?
+ * TODO load as SPI will be better? 所有环境配置的组装
  */
 public class Environment {
     private static final Environment INSTANCE = new Environment();
@@ -36,7 +36,9 @@ public class Environment {
     private Map<String, InmemoryConfiguration> externalConfigs = new ConcurrentHashMap<>();
     private Map<String, InmemoryConfiguration> appExternalConfigs = new ConcurrentHashMap<>();
 
-    private Map<String, String> externalConfigurationMap = new HashMap<>();
+    //全局级别的外部配置
+    private Map<String, String> externalConfigurationMap = new HashMap<>(); //从外部配置中获取值
+    //应用级别的外部配置
     private Map<String, String> appExternalConfigurationMap = new HashMap<>();
 
     private boolean configCenterFirst = true;
@@ -106,7 +108,7 @@ public class Environment {
      * Create new instance for each call, since it will be called only at startup, I think there's no big deal of the potential cost.
      * Otherwise, if use cache, we should make sure each Config has a unique id which is difficult to guarantee because is on the user's side,
      * especially when it comes to ServiceConfig and ReferenceConfig.
-     *
+     * 将所有环境配置 按照优先级加载
      * @param prefix
      * @param id
      * @return
@@ -115,7 +117,9 @@ public class Environment {
         CompositeConfiguration compositeConfiguration = new CompositeConfiguration();
         // Config center has the highest priority
         compositeConfiguration.addConfiguration(this.getSystemConfig(prefix, id));
+        //应用级别的外部配置
         compositeConfiguration.addConfiguration(this.getAppExternalConfig(prefix, id));
+        //全局级别的外部配置
         compositeConfiguration.addConfiguration(this.getExternalConfig(prefix, id));
         compositeConfiguration.addConfiguration(this.getPropertiesConfig(prefix, id));
         return compositeConfiguration;

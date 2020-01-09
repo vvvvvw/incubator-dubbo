@@ -114,6 +114,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    //1.从zk上获取各种类型的节点以及数量，以及将自己 的信息 在zookeeper 上的 ${service}/consumers
+    // 下面创建一个节点。并且会获取${service} 下面所有类型的节点
+    //2.执行 notify 方法，主要目的 注册后第一次通过注册中心信息去更新 对应配置
     @Override
     public void doSubscribe(final URL url, final NotifyListener listener) {
         try {

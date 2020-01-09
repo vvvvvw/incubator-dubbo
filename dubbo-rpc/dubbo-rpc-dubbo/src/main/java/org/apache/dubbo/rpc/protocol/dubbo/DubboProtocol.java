@@ -242,6 +242,7 @@ public class DubboProtocol extends AbstractProtocol {
         return exporterMap;
     }
 
+    //如果是 作为客户端(对于本地回调来说，服务端就是 本地回调服务的客户端)
     private boolean isClientSide(Channel channel) {
         InetSocketAddress address = channel.getRemoteAddress();
         URL url = channel.getUrl();
@@ -256,7 +257,7 @@ public class DubboProtocol extends AbstractProtocol {
         boolean isStubServiceInvoke = false;
         //本地服务端口
         int port = channel.getLocalAddress().getPort();
-        //请求的服务
+        //请求的服务   回调服务接口全限定类名
         String path = inv.getAttachments().get(Constants.PATH_KEY);
 
         //是否 是客户端本地存根
@@ -267,11 +268,13 @@ public class DubboProtocol extends AbstractProtocol {
             port = channel.getRemoteAddress().getPort();
         }
 
-        //是否为本地回调
+        //是否是作为本地回调的客户端，且不是本地存根 //如果是 作为客户端(对于本地回调来说，服务端就是 客户端本地回调服务的客户端)
         //callback
         isCallBackServiceInvoke = isClientSide(channel) && !isStubServiceInvoke;
         if (isCallBackServiceInvoke) {
+            // path = {回调服务接口的全限定类名}.null
             path += "." + inv.getAttachments().get(Constants.CALLBACK_SERVICE_KEY);
+            // 向attachments中添加 _isCallBackServiceInvoke:true
             inv.getAttachments().put(IS_CALLBACK_SERVICE_INVOKE, Boolean.TRUE.toString());
         }
 
@@ -311,7 +314,7 @@ public class DubboProtocol extends AbstractProtocol {
         //export an stub service for dispatching event
         Boolean isStubSupportEvent = url.getParameter(Constants.STUB_EVENT_KEY, Constants.DEFAULT_STUB_EVENT);
         Boolean isCallbackservice = url.getParameter(Constants.IS_CALLBACK_SERVICE, false);
-        // 如果是本地存根事件而不是回调服务
+        // 如果是本地存根事件而不是回调服务，只有消费端才会走到这里
         if (isStubSupportEvent && !isCallbackservice) {
             // 获得本地存根的方法
             String stubServiceMethods = url.getParameter(Constants.STUB_EVENT_METHODS_KEY);
@@ -340,7 +343,7 @@ public class DubboProtocol extends AbstractProtocol {
         // find server.
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
-        // 客户端是否可以暴露仅供服务器调用的服务
+        // 客户端是否可以暴露仅供服务器调用的服务（todo 这个key不懂是什么意思，服务端暴露的时候 value为null）
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         // 如果是的话
         if (isServer) {
@@ -411,7 +414,7 @@ public class DubboProtocol extends AbstractProtocol {
 
     //把序列化的类放入到集合，以便进行序列化
     private void optimizeSerialization(URL url) throws RpcException {
-        //// 获得类名
+        //// 获得类名（todo 开启优化点）
         String className = url.getParameter(Constants.OPTIMIZER_KEY, "");
         if (StringUtils.isEmpty(className) || optimizers.contains(className)) {
             return;

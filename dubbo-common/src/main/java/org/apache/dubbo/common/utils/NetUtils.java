@@ -233,7 +233,7 @@ public class NetUtils {
 
     /**
      * Find first valid IP from local network card
-     *
+     * 找到第一个本地网卡ip
      * @return first valid local IP
      */
     public static InetAddress getLocalAddress() {

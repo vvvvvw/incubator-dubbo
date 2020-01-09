@@ -23,7 +23,8 @@ import org.apache.dubbo.remoting.Dispatcher;
 /**
  * In addition to sending all the use thread pool processing
  */
-public class ExecutionDispatcher implements Dispatcher {
+public class
+ExecutionDispatcher implements Dispatcher {
 
     public static final String NAME = "execution";
 

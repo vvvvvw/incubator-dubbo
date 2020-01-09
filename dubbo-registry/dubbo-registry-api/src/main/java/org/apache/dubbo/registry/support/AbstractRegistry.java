@@ -95,11 +95,11 @@ public abstract class AbstractRegistry implements Registry {
     // 订阅URL的监听器集合
     //Map<消费者url，所有监听器>
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();
-    // 某个消费者被通知的某一类型的 URL 集合
+    // 某个消费者被通知的某一类型的 URL 集合（只保留每个类型最新一次的url集合，本次会覆盖上一次的，调用notify方法的时候，对于已经不存在的url类别，不会调用notify方法）
     // 第一个key是消费者的URL，对应的就是哪个消费者。
     // value是一个map集合，该map集合的key是分类的意思，例如providers、routes等，value就是被通知的URL集合
     // 跟properties的区别是第一数据来源不是文件，而是从注册中心中读取，第二个notified根据分类把同一类的值做了聚合。
-    //Map<消费者的URL,Map<分类，被通知的服务端URL集合>>
+    //Map<消费者的URL,Map<Category(roviders、configurators、routers 等)，被通知的服务端URL集合>>
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();
     // 注册中心 URL
     private URL registryUrl;
@@ -474,10 +474,12 @@ listener.notify，通知监听器，例如，有新的服务提供者启动时�
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
         // keep every provider's category.
+        //Map<Category,List<URL>> 根据Category分类
         Map<String, List<URL>> result = new HashMap<>();
         // 将urls进行分类
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {
+                //如果服务名和 需要更新的url一致
                 // 按照url中key为category对应的值进行分类，如果没有该值，就认为category为providers
                 String category = u.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
                 List<URL> categoryList = result.computeIfAbsent(category, k -> new ArrayList<>());
@@ -488,7 +490,9 @@ listener.notify，通知监听器，例如，有新的服务提供者启动时�
             return;
         }
         // 获得某一个消费者被通知的url集合（通知的 URL 变化结果）
+        //获取 url 被通知的 URL集合，如果没有，创建一个 ConcurrentHashMap
         Map<String, List<URL>> categoryNotified = notified.computeIfAbsent(url, u -> new ConcurrentHashMap<>());
+        //根据result来调用notify方法，对于已经不存在的url类别，不会调用notify方法
         for (Map.Entry<String, List<URL>> entry : result.entrySet()) {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();

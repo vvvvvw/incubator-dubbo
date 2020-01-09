@@ -38,7 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * DubboRegistry
- */
+ */ //默认远程提供服务
 public class DubboRegistry extends FailbackRegistry {
 
     // 日志记录

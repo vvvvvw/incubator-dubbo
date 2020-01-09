@@ -169,7 +169,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * whether it is a GenericService
      */
-    //泛接口调用
+    //是否是 泛化实现
     private volatile String generic;
 
     public ServiceConfig() {
@@ -293,7 +293,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
 
-        // 检测 ref 是否为泛化服务类型（泛接口调用）
+        // 检测 ref 是否为泛化实现
         if (ref instanceof GenericService) {
             // 设置interfaceClass为GenericService
             interfaceClass = GenericService.class;
@@ -303,7 +303,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             }
         } else {
             try {
-                // 获得接口类型
+                // 非泛化实现：获得接口类型
                 interfaceClass = Class.forName(interfaceName, true, Thread.currentThread()
                         .getContextClassLoader());
             } catch (ClassNotFoundException e) {
@@ -313,12 +313,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             checkInterfaceAndMethods(interfaceClass, methods);
             // 对 ref 合法性进行检测
             checkRef();
-            generic = Boolean.FALSE.toString();
+            generic = Boolean.FALSE.toString(); // 设置 generic = "false",表示不是泛化实现
         }
         // stub local一样都是配置本地存根
         if (local != null) {
             if ("true".equals(local)) {
-                local = interfaceName + "Local";
+                local = interfaceName + "Local"; //本地存根类名
             }
             Class<?> localClass;
             try {
@@ -326,17 +326,17 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
-            if (!interfaceClass.isAssignableFrom(localClass)) {
+            if (!interfaceClass.isAssignableFrom(localClass)) { //检查合法性
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
         if (stub != null) {
             if ("true".equals(stub)) {
-                stub = interfaceName + "Stub";
+                stub = interfaceName + "Stub"; //本地存根类名
             }
             Class<?> stubClass;
             try {
-                stubClass = ClassHelper.forNameWithThreadContextClassLoader(stub);
+                stubClass = ClassHelper.forNameWithThreadContextClassLoader(stub); //本地存根合法性
             } catch (ClassNotFoundException e) {
                 throw new IllegalStateException(e.getMessage(), e);
             }
@@ -463,7 +463,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // 加载注册中心链接
         List<URL> registryURLs = loadRegistries(true);
         // 遍历 protocols，并在每个协议下暴露服务
-        // TODO: 这边的协议是从哪里配置的？  by 15258 2019/6/4 7:20
+
         for (ProtocolConfig protocolConfig : protocols) {
             // 以contextPath、path、group、version来作为服务唯一性确定的key
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
@@ -529,6 +529,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 // TODO: 这个是什么列表  by 15258 2019/6/4 7:30
                 List<ArgumentConfig> arguments = method.getArguments();
                 if (CollectionUtils.isNotEmpty(arguments)) {
+                    //arguments中只包含了一个属性 {方法名}.{参数index}.callback -> true/false
                     // 遍历ArgumentConfig列表
                     for (ArgumentConfig argument : arguments) {
                         // // 检测 type 属性是否为空，或者空串
@@ -631,7 +632,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
         // —————————————————————————————————————开始发布———————————————————————————————————————
-
+        // 覆盖规则
         // TODO: 发布的使用有协议为 absent或者override的？那如果没有的话，都不需要覆盖了？  by 15258 2019/6/4 7:59
         // 加载 ConfiguratorFactory，并生成 Configurator 实例，判断是否有该协议的实现存在
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
@@ -658,7 +659,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                 }
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
-                    // 如果注册中心链接集合不为空
+                    // 如果注册中心链接集合不为空,// zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F172.17.48.52%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
                     for (URL registryURL : registryURLs) {
                         // 遍历注册中心
                         // 添加dynamic配置
@@ -692,7 +693,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         exporters.add(exporter);
                     }
                 } else {
-                    // 不存在注册中心，则仅仅暴露服务，不会记录暴露到地址
+                    // 仅仅暴露服务，不会记录暴露到地址
                     Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
@@ -717,7 +718,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     //本地暴露调用的是injvm协议方法，也就是InjvmProtocol 的 export()方法
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
-        // 如果协议不是injvm
+        // 如果 URL 的协议头等于 injvm，说明导出到远程就是导出到本地了，无需再次导出
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
             // 生成本地的url,分别把协议改为injvm，设置host和port
             URL local = URLBuilder.from(url)

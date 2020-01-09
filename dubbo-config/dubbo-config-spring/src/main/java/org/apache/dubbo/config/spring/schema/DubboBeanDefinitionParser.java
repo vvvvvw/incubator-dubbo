@@ -80,7 +80,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             String generatedBeanName = element.getAttribute("name");
             if (StringUtils.isEmpty(generatedBeanName)) {
                 if (ProtocolConfig.class.equals(beanClass)) {
-                    //如果是解析 protocol，使用dubbo作为生成的bean的名字
+                    //如果是解析 protocolConfig，使用dubbo作为生成的bean的名字
                     generatedBeanName = "dubbo";
                 } else {
                     //否则使用 interface属性
@@ -94,6 +94,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             id = generatedBeanName;
             int counter = 2;
             while (parserContext.getRegistry().containsBeanDefinition(id)) {
+                //如果命名重复，则+1直到不重复
                 id = generatedBeanName + (counter++);
             }
         }
@@ -101,11 +102,13 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
             if (parserContext.getRegistry().containsBeanDefinition(id)) {
                 throw new IllegalStateException("Duplicate spring bean id " + id);
             }
+            //注册bean
             parserContext.getRegistry().registerBeanDefinition(id, beanDefinition);
             beanDefinition.getPropertyValues().addPropertyValue("id", id);
         }
         if (ProtocolConfig.class.equals(beanClass)) {
             for (String name : parserContext.getRegistry().getBeanDefinitionNames()) {
+                //遍历所有的 bean，找到 属性名为 protocol并且类型为 ProtocolConfig并且 id和 本Protocol 一致的，把 本Protocal设置进去
                 BeanDefinition definition = parserContext.getRegistry().getBeanDefinition(name);
                 PropertyValue property = definition.getPropertyValues().getPropertyValue("protocol");
                 if (property != null) {

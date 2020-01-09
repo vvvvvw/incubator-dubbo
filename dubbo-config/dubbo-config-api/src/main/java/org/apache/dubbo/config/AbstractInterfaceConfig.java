@@ -236,7 +236,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
-
+    //获取外部配置
     void startConfigCenter() {
         if (configCenter == null) {
             ConfigManager.getInstance().getConfigCenter().ifPresent(cc -> this.configCenter = cc);
@@ -335,11 +335,11 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                                 .build();
                         /*
                         // 通过判断条件，决定是否添加 url 到 registryList 中，条件如下：
-                    // 如果是服务提供者，并且是注册中心服务   或者   是消费者端，并且是订阅服务
+                    // 如果是服务提供者，并且是register 这个key有值   或者   是消费者端，并且是订阅服务
                     // 则加入到registryList
                          */
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
-                                || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
+                                || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) { //todo 消费端这个不能理解，因为没有设值的地方
                             registryList.add(url);
                         }
                     }
@@ -469,7 +469,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             return;
         }
 
-        String normalizedMock = MockInvoker.normalizeMock(mock);
+        String normalizedMock = MockInvoker.normalizeMock(mock); //正则化mock
         if (normalizedMock.startsWith(Constants.RETURN_PREFIX)) {
             normalizedMock = normalizedMock.substring(Constants.RETURN_PREFIX.length()).trim();
             try {

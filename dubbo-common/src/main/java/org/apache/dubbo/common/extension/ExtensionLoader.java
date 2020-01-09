@@ -87,6 +87,7 @@ public class ExtensionLoader<T> {
 
     private final Class<?> type;
 
+    //对象工厂，用于依赖注入
     private final ExtensionFactory objectFactory;
 
     //region cache开头的map，懒加载实现，都是实例变量，和扩展的接类相关。出于性能和资源的优化，才做的缓存，读取扩展配置后，会先进行缓存，等到真正需要用到某个实现时，再对该实现类的对象进行初始化，然后对该对象也进行缓存
@@ -118,8 +119,9 @@ public class ExtensionLoader<T> {
 
     private ExtensionLoader(Class<?> type) {
         this.type = type;
-        //去除循环调用
-        objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
+        //设置对象工厂，用于依赖注入
+        // 当 type为 ExtensionFactory时直接返回，避免循环调用
+        objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());;
     }
 
     private static <T> boolean withExtensionAnnotation(Class<T> type) {
@@ -189,6 +191,13 @@ public class ExtensionLoader<T> {
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String, String)
      */
     //获得符合自动激活条件的扩展实现类对象集合
+
+    /**
+     * key对应的value中 可以 传入用户自定义的扩展
+     * @param url
+     * @param key
+     * @return 默认扩展（符合key和group定义的扩展）+ key对应的value中指定的扩展
+     */
     public List<T> getActivateExtension(URL url, String key) {
         return getActivateExtension(url, key, null);
     }
@@ -201,7 +210,7 @@ public class ExtensionLoader<T> {
      * @return extension list which are activated
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String[], String)
      */
-    //获得符合自动激活条件的扩展实现类对象集合
+    //获得符合自动激活条件和用户指定的扩展实现类对象集合
     public List<T> getActivateExtension(URL url, String[] values) {
         return getActivateExtension(url, values, null);
     }
@@ -215,9 +224,9 @@ public class ExtensionLoader<T> {
      * @return extension list which are activated.
      * @see #getActivateExtension(org.apache.dubbo.common.URL, String[], String)
      */
-    //获得符合自动激活条件的扩展实现类对象集合
+    //获得符合自动激活条件和用户指定的扩展实现类对象集合
     public List<T> getActivateExtension(URL url, String key, String group) {
-        // 获得符合自动激活条件的拓展对象数组
+        // 获得用户指定需要激活的扩展对象数组（也必须符合 group）
         String value = url.getParameter(key);
         //使用 , 分隔
         return getActivateExtension(url, StringUtils.isEmpty(value) ? null : Constants.COMMA_SPLIT_PATTERN.split(value), group);
@@ -232,20 +241,24 @@ public class ExtensionLoader<T> {
      * @return extension list which are activated
      * @see org.apache.dubbo.common.extension.Activate
      */
-    //获得符合自动激活条件的扩展实现类对象集合 todo values中的取值不要中划线 显示配置的扩展和自动激活的扩展同时都配置了同
+    //获得符合自动激活条件和用户指定的扩展实现类对象集合
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> exts = new ArrayList<>();
         List<String> names = values == null ? new ArrayList<>(0) : Arrays.asList(values);
-        //判断不存在配置 `"-name"` 。
 
         /**
-         * 如果没有 -default 的配置
-         *  流程：获取对应group的activate对象集合，从url中获取指定的key对应的value并且split，这些表示需要添加实现类的扩展名
-         *  同时url的参数中包含非空键值对，key为实现类的@Activate注解中指定的value中的一个
+         *  获取符合激活条件（符合group之一和Activate对象当指定key的其中之一出现在URL的parameters中）的activate对象集合（包括 自动激活的扩展对象和用户在key的value中指定的扩展对象），
+         *  如果 key对应的value中有如下情况：
+         *     --- 包含-default，则不获取自动激活对象，只从指定 扩展 中 返回符合条件的扩展
+         *    ---包含 -extname，则不获取extname对应的扩展
+         *    -- 默认排揎，自动激活在前，指定在后。但是 如下写法 可以重新排序：ext1，default，ext2
          */
+
+
+
         //例如，<dubbo:service filter="-default" /> ，代表移除所有默认过滤器。
 
-        //如果不包含 -default，则首先获取所有可自动激活的对象
+        //如果不包含 -default，则首先获取所有可自动激活的扩展
         if (!names.contains(Constants.REMOVE_VALUE_PREFIX + Constants.DEFAULT_KEY)) {
             //获得扩展实现类数组，把扩展实现类放到 cachedClasses 中
             getExtensionClasses();
@@ -269,6 +282,7 @@ public class ExtensionLoader<T> {
                     //通过扩展名获得拓展对象
                     T ext = getExtension(name);
                     //不包含在自定义配置里。如果包含，会在下面的代码处理。
+
                     //判断是否配置移除。例如 <dubbo:service filter="-monitor" />，则 MonitorFilter 会被移除
                     //判断是否激活
                     if (!names.contains(name)
@@ -288,8 +302,7 @@ public class ExtensionLoader<T> {
         List<T> usrs = new ArrayList<>();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
-            //还是判断是否是被移除的配置
-            //不能移除已经添加的配置
+            //判断是否是 移除配置，如果是 移除配置，则不添加
             if (!name.startsWith(Constants.REMOVE_VALUE_PREFIX)
                     && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)) {
                 //default之前的配置比自动激活的对象先加载，default之后的配置比自动激活的对象后加载

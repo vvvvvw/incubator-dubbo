@@ -91,7 +91,7 @@ public class QosProtocolWrapper implements Protocol {
                         "dubbo.properties or XML/spring-boot configuration.");
                 return;
             }
-
+            //启动qps服务，默认端口 22222
             int port = url.getParameter(QOS_PORT, QosConstants.DEFAULT_PORT);
             boolean acceptForeignIp = Boolean.parseBoolean(url.getParameter(ACCEPT_FOREIGN_IP, "false"));
             Server server = Server.getInstance();
