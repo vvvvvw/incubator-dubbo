@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see org.apache.dubbo.cache.support.threadlocal.ThreadLocalCacheFactory
  * @see org.apache.dubbo.cache.support.expiring.ExpiringCacheFactory
  */
+//缓存生成 工厂
 public abstract class AbstractCacheFactory implements CacheFactory {
 
     /**

@@ -26,10 +26,16 @@ import java.util.Map;
 /**
  * ProviderModel which is about published services
  */
+//服务提供者 提供的服务相关信息
 public class ProviderModel {
+
+    //[group/][暴露协议扩展对应的contextPath/]path[:version]  path:默认是 接口类的全限定类名
     private final String serviceName;
+    //服务实现类
     private final Object serviceInstance;
+    //服务实现接口
     private final Class<?> serviceInterfaceClass;
+    //Map<方法名，方法的相关属性>
     private final Map<String, List<ProviderMethodModel>> methods = new HashMap<String, List<ProviderMethodModel>>();
 
     public ProviderModel(String serviceName, Object serviceInstance, Class<?> serviceInterfaceClass) {

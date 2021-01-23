@@ -153,32 +153,39 @@ class CallbackServiceCodec {
         Object proxy = null;
         // invoker 缓存对象 的key：callback.service.proxy.12503143.com.anla.rpc.callback.provider.service.CallbackListener.654342195.invoker
         //构建服务端 缓存对象的key
-        // callback.service.proxy.{channel的内存地址计算到的hash值}.{接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}.invoker
+        // callback.service.proxy.{channel的内存地址计算到的hash值}.{回调接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}.invoker
         String invokerCacheKey = getServerSideCallbackInvokerCacheKey(channel, clazz.getName(), instid);
         // 代理缓存对象key：callback.service.proxy.12503143.com.anla.rpc.callback.provider.service.CallbackListener.654342195
-        // callback.service.proxy.{channel的内存地址计算到的hash值}.{接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}
+        // callback.service.proxy.{channel的内存地址计算到的hash值}.{回调接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}
         String proxyCacheKey = getServerSideCallbackServiceCacheKey(channel, clazz.getName(), instid);
         // 判断当前 channel 是否已经缓存了代理对象。
         proxy = channel.getAttribute(proxyCacheKey);
         // count 的key  callback.service.proxy.12503143.com.anla.rpc.callback.provider.service.CallbackListener.COUNT
-        ////callback.service.proxy.{channel实例的内存地址计算出来的hash值}.{接口的全限定类名}.COUNT
+        ////callback.service.proxy.{channel实例的内存地址计算出来的hash值}.{回调接口的全限定类名}.COUNT
         String countkey = getServerSideCountKey(channel, clazz.getName());
         //如果创建 服务端callback代理对象
         if (isRefer) {
             if (proxy == null) {
-                //构建url: callback:
+                //构建url: callback://{原服务端ip:原服务端端口}/{回调接口的全限定类名}?interface={回调接口的全限定类名}
                 URL referurl = URL.valueOf("callback://" + url.getAddress() + "/" + clazz.getName() + "?" + Constants.INTERFACE_KEY + "=" + clazz.getName());
                 referurl = referurl.addParametersIfAbsent(url.getParameters()).removeParameter(Constants.METHODS_KEY);
+                // 以下判断是否超出 服务的 callback 阈值
                 if (!isInstancesOverLimit(channel, referurl, clazz.getName(), instid, true)) {
+                    // 构造一个Invoker
                     @SuppressWarnings("rawtypes")
                     Invoker<?> invoker = new ChannelWrappedInvoker(clazz, channel, referurl, String.valueOf(instid));
+                    // 使用 JavassistProxyFactory 生成一个由 InvokerInvocationHandler+ AsyncToSyncInvoker 的包装的invoker
                     proxy = proxyFactory.getProxy(invoker);
+                    // 将代理类设置到 channel的缓存，key:callback.service.proxy.{channel的内存地址计算到的hash值}.{回调接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}
                     channel.setAttribute(proxyCacheKey, proxy);
+                    //将创建的invoker设置到channel缓存，key：callback.service.proxy.{channel的内存地址计算到的hash值}.{回调接口全限定类名}.{客户端callbackservice实例在内存中的地址计算出来的hash值}.invoker
                     channel.setAttribute(invokerCacheKey, invoker);
+                    //count缓存+1
                     increaseInstanceCount(channel, countkey);
 
                     //convert error fail fast .
                     //ignore concurrent problem.
+                    //设置channel 缓存：channel.callback.invokers.key value:Set<invokers>
                     Set<Invoker<?>> callbackInvokers = (Set<Invoker<?>>) channel.getAttribute(Constants.CHANNEL_CALLBACK_KEY);
                     if (callbackInvokers == null) {
                         callbackInvokers = new ConcurrentHashSet<Invoker<?>>(1);
@@ -190,6 +197,7 @@ class CallbackServiceCodec {
             }
         } else {
             if (proxy != null) {
+                // 从channel 中拿出缓存并销毁
                 Invoker<?> invoker = (Invoker<?>) channel.getAttribute(invokerCacheKey);
                 try {
                     Set<Invoker<?>> callbackInvokers = (Set<Invoker<?>>) channel.getAttribute(Constants.CHANNEL_CALLBACK_KEY);
@@ -203,6 +211,7 @@ class CallbackServiceCodec {
                 // cancel refer, directly remove from the map
                 channel.removeAttribute(proxyCacheKey);
                 channel.removeAttribute(invokerCacheKey);
+                //修改缓存计数
                 decreaseInstanceCount(channel, countkey);
             }
         }
@@ -307,7 +316,7 @@ class CallbackServiceCodec {
         // 如果是callback 类型，则创建client 端的代理，即这个代理对象可以发起对client端的远程调用
         URL url = null;
         try {
-            // 解析出url
+            // 解析出url（导出服务的url）（不是 回调服务的）
             url = DubboProtocol.getDubboProtocol().getInvoker(channel, inv).getUrl();
         } catch (RemotingException e) {
             if (logger.isInfoEnabled()) {
@@ -315,7 +324,7 @@ class CallbackServiceCodec {
             }
             return inObject;
         }
-        // 解析callback类型  CALLBACK_NONE/CALLBACK_CREATE/CALLBACK_DESTROY
+        // 根据key({methodName}.{argIndex}.callback)解析callback类型  CALLBACK_NONE/CALLBACK_CREATE/CALLBACK_DESTROY
         byte callbackstatus = isCallBack(url, inv.getMethodName(), paraIndex);
         switch (callbackstatus) {
             case CallbackServiceCodec.CALLBACK_NONE:

@@ -139,10 +139,11 @@ public class ApplicationConfig extends AbstractConfig {
         return name;
     }
 
+    // 设置name
     public void setName(String name) {
         checkName(Constants.NAME, name);
         this.name = name;
-        if (StringUtils.isEmpty(id)) {
+        if (StringUtils.isEmpty(id)) { //todo 这边一个bug
             id = name;
         }
     }

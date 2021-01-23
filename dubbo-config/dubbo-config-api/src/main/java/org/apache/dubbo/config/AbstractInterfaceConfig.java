@@ -132,7 +132,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     /**
      * Registry centers
      */
-    //注册中心配置
+    //注册中心配置（list 说明注册中心可以有多个）
     protected List<RegistryConfig> registries;
 
     protected String registryIds;
@@ -161,9 +161,16 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     /**
      * Check whether the registry config is exists, and then conversion it to {@link RegistryConfig}
      */
+    //1.构建 RegistryConfig列表
+    //直接能获取地址：从系统变量或者配置文件中 获取 dubbo.registry.address参数值
+    //通过 registryIds：registryIds{spring配置文件} >registryIds{外部配置中前缀为dubbo.registries.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认registryConfig
+    //2.如果没有显示配置 config-center，则使用 第一个zk RegistryConfig中的地址作为 外部配置的 zk地址，并更新配置
     protected void checkRegistry() {
+        // 从系统变量或者配置文件中 获取 dubbo.registry.address参数值 并 转换为 RegistryConfig列表(设置了address字段)
         loadRegistriesFromBackwardConfig();
 
+        //todo 在正常配置中没有手动设置 restry
+        //获取 registryConfig列表并构造RegistryConfig列表（只设置id字段），registryIds{spring配置文件} >registryIds(其实就是在外部配置中对应registry配置了属性的){外部配置中前缀为dubbo.registries.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认registryConfig
         convertRegistryIdsToRegistries();
 
         for (RegistryConfig registryConfig : registries) {
@@ -176,19 +183,26 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         useRegistryForConfigIfNecessary();
     }
 
+    // 1.检测 applicationConfig 是否为空，为空获取默认的applicationConfig，如果默认的applicationConfig也没有则新建一个默认的，并通过配置为其初始化
+    // 2.设置application到配置管理器和ApplicationModel 中
+    // 3.从配置文件或者系统变量中获取 服务端启动的服务器的关闭的等待时间 并设置到系统变量中
     @SuppressWarnings("deprecation")
     protected void checkApplication() {
         // for backward compatibility
         createApplicationIfAbsent();
 
+        //name参数不能为空
         if (!application.isValid()) {
             throw new IllegalStateException("No application config found or it's not a valid config! " +
                     "Please add <dubbo:application name=\"...\" /> to your spring config.");
         }
 
+        //设置到ApplicationModel中
         ApplicationModel.setApplication(application.getName());
 
+        // 向后兼容
         // backward compatibility
+        //从系统变量和配置文件中获取 dubbo.service.shutdown.wait参数 并设置到系统变量中
         String wait = ConfigUtils.getProperty(Constants.SHUTDOWN_WAIT_KEY);
         if (wait != null && wait.trim().length() > 0) {
             System.setProperty(Constants.SHUTDOWN_WAIT_KEY, wait.trim());
@@ -200,6 +214,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
+    //检查是否配置了服务监听器的url，如果没有创建一个默认的
     protected void checkMonitor() {
         createMonitorIfAbsent();
         if (!monitor.isValid()) {
@@ -227,9 +242,12 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     protected void checkMetadataReport() {
         // TODO get from ConfigManager first, only create if absent.
         if (metadataReportConfig == null) {
+            //如果没有元数据上报配置，则设置元数据上报配置
             setMetadataReportConfig(new MetadataReportConfig());
         }
+        //更新配置
         metadataReportConfig.refresh();
+        //地址是否有效
         if (!metadataReportConfig.isValid()) {
             logger.warn("There's no valid metadata config found, if you are using the simplified mode of registry url, " +
                     "please make sure you have a metadata address configured properly.");
@@ -244,23 +262,38 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
         if (this.configCenter != null) {
             // TODO there may have duplicate refresh
+            //使用 spring和配置文件中的 配置来初始化 configCenter
             this.configCenter.refresh();
+            //获取 外部配置中心的 配置，并添加到 多级配置中
             prepareEnvironment();
         }
+        //将 ApplicationConfig, MonitorConfig, ModuleConfig, ProtocolConfig, RegistryConfig, ProviderConfig, ConsumerConfig的配置都刷新一遍
         ConfigManager.getInstance().refreshAll();
     }
 
+    //如果启用 configcenter，则从configcenter中获取 全局和应用配置 并 更新到 相应的内存配置中
     private void prepareEnvironment() {
+        // 根据configcenter的address是否设定和设定是否有效来判断 configcenter是否启用
         if (configCenter.isValid()) {
+            //如果已经初始化，直接返回
             if (!configCenter.checkOrUpdateInited()) {
                 return;
             }
             DynamicConfiguration dynamicConfiguration = getDynamicConfiguration(configCenter.toUrl());
+            // key:{configFile参数值(默认值是 dubbo.properties)} group:{group参数值(dubbo)}
+            // 获取外部配置，如果是zk：/dubbo/config/dubbo/dubbo.properties(默认是)
             String configContent = dynamicConfiguration.getConfig(configCenter.getConfigFile(), configCenter.getGroup());
 
+            //从 applicationConfig配置中获取应用名
+            //此处的application 是在 ConfigCenterBean的构造函数中配置的
+            //在外部化配置中，如果在 <dubbo:config-center />标签中没有指定 application参数，则会获取spring容器中 default为null或者true的 applicationConfig实例并设置到 application属性上，为之后的 应用特定的外部化配置 做准备
             String appGroup = application != null ? application.getName() : null;
             String appConfigContent = null;
             if (StringUtils.isNotEmpty(appGroup)) {
+                //获取应用级别的配置
+                // key:{appConfigFile参数值(默认值是 null)} > {configFile参数值(默认值是 dubbo.properties)}
+                // group:{applicationConfig 默认为null}
+                // zk默认值：/dubbo/config/{应用名}/dubbo.properties
                 appConfigContent = dynamicConfiguration.getConfig
                         (StringUtils.isNotEmpty(configCenter.getAppConfigFile()) ? configCenter.getAppConfigFile() : configCenter.getConfigFile(),
                          appGroup
@@ -268,7 +301,9 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             }
             try {
                 Environment.getInstance().setConfigCenterFirst(configCenter.isHighestPriority());
+                //将外部配置 全部添加到 内存全局配置中
                 Environment.getInstance().updateExternalConfigurationMap(parseProperties(configContent));
+                //将外部配置 全部添加到 应用全局配置中
                 Environment.getInstance().updateAppExternalConfigurationMap(parseProperties(appConfigContent));
             } catch (IOException e) {
                 throw new IllegalStateException("Failed to parse configurations from Config Center.", e);
@@ -276,6 +311,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
+    //获取对应外部配置类 扩展
     private DynamicConfiguration getDynamicConfiguration(URL url) {
         DynamicConfigurationFactory factories = ExtensionLoader
                 .getExtensionLoader(DynamicConfigurationFactory.class)
@@ -292,7 +328,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      * @param provider whether it is the provider side
      * @return
      */
-    //加载注册中心链接。
+    //加载注册中心url(path为 RegistryService接口的全限定类名)
     protected List<URL> loadRegistries(boolean provider) {
         // check && override if necessary
         List<URL> registryList = new ArrayList<URL>();
@@ -330,16 +366,16 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                         url = URLBuilder.from(url)
                                 //todo 注册中心使用的协议设置到参数中，在 registryProtocol中会拿出来
                                 .addParameter(Constants.REGISTRY_KEY, url.getProtocol())
-                                //todo 设置为 registry协议，之后会先调用 registry协议
+                                //todo 设置为 registry协议
                                 .setProtocol(Constants.REGISTRY_PROTOCOL)
                                 .build();
                         /*
                         // 通过判断条件，决定是否添加 url 到 registryList 中，条件如下：
-                    // 如果是服务提供者，并且是register 这个key有值   或者   是消费者端，并且是订阅服务
-                    // 则加入到registryList
+                        // 如果是服务提供者，并且是register 这个key没有值或者为true(没有找到register 这个key设置的地方，应该是在address参数后面加上？来设置的)   或者   是消费者端，并且subscribe这个查询参数没有值或者为true
+                        // 则加入到registryList
                          */
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
-                                || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) { //todo 消费端这个不能理解，因为没有设值的地方
+                                || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
                             registryList.add(url);
                         }
                     }
@@ -356,6 +392,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      * @param registryURL
      * @return
      */
+    // 服务监听器的url
     protected URL loadMonitor(URL registryURL) {
         checkMonitor();
         Map<String, String> map = new HashMap<String, String>();
@@ -366,24 +403,33 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         if (StringUtils.isEmpty(hostToRegistry)) {
             hostToRegistry = NetUtils.getLocalHost();
         }
+        //设置用来注册到注册中心的url
         map.put(Constants.REGISTER_IP_KEY, hostToRegistry);
+        //设置 monitor配置到map中
         appendParameters(map, monitor);
+        //设置 applicaton配置到map中
         appendParameters(map, application);
         String address = monitor.getAddress();
+        // 监听器url的地址
         String sysaddress = System.getProperty("dubbo.monitor.address");
         if (sysaddress != null && sysaddress.length() > 0) {
             address = sysaddress;
         }
         if (ConfigUtils.isNotEmpty(address)) {
+            //如果配置了address地址
             if (!map.containsKey(Constants.PROTOCOL_KEY)) {
                 if (getExtensionLoader(MonitorFactory.class).hasExtension(Constants.LOGSTAT_PROTOCOL)) {
+                    //如果没有配置 protocol并且有logstat扩展，则使用logstat扩展，否则使用dubbo
                     map.put(Constants.PROTOCOL_KEY, Constants.LOGSTAT_PROTOCOL);
                 } else {
                     map.put(Constants.PROTOCOL_KEY, Constants.DUBBO_PROTOCOL);
                 }
             }
+            // ({protocol}|logstat|dubbo)://address?interface=org.apache.dubbo.monitor.MonitorService&register.ip={服务暴露的ip地址}
             return UrlUtils.parseURL(address, map);
         } else if (Constants.REGISTRY_PROTOCOL.equals(monitor.getProtocol()) && registryURL != null) {
+            // 如果是从注册中心中获取monitor地址，注册中心的相关地址和查询参数
+            // dubbo://注册中心相关地址、参数和path，协议?protocol=registry&refer=monitorConfig+applicationConfig和其他参数
             return URLBuilder.from(registryURL)
                     .setProtocol(Constants.DUBBO_PROTOCOL)
                     .addParameter(Constants.PROTOCOL_KEY, Constants.REGISTRY_PROTOCOL)
@@ -427,6 +473,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      * @param interfaceClass the interface of remote service
      * @param methods the methods configured
      */
+    //检查 接口类，使用混合配置 更新 methodConfig的属性
     protected void checkInterfaceAndMethods(Class<?> interfaceClass, List<MethodConfig> methods) {
         // interface cannot be null
         Assert.notNull(interfaceClass, new IllegalStateException("interface not allow null!"));
@@ -440,6 +487,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             for (MethodConfig methodBean : methods) {
                 methodBean.setService(interfaceClass.getName());
                 methodBean.setServiceId(this.getId());
+                //使用 混合配置中的配置 来 更新 methodConfig的属性
                 methodBean.refresh();
                 String methodName = methodBean.getName();
                 if (StringUtils.isEmpty(methodName)) {
@@ -530,8 +578,10 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         }
     }
 
+    //获取 registryConfig列表并构造RegistryConfig列表（只设置id字段），registryIds{spring配置文件} >registryIds{外部配置中前缀为dubbo.registries.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认registryConfig
     private void convertRegistryIdsToRegistries() {
         if (StringUtils.isEmpty(registryIds) && CollectionUtils.isEmpty(registries)) {
+            //如果 registryIds和registries都没有配置，则从 外部全局配置和 应用外部配置 中 获取 key前缀为 dubbo.registries.的条目并 收集其valuie
             Set<String> configedRegistries = new HashSet<>();
             configedRegistries.addAll(getSubProperties(Environment.getInstance().getExternalConfigurationMap(),
                     Constants.REGISTRIES_SUFFIX));
@@ -543,6 +593,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
         if (StringUtils.isEmpty(registryIds)) {
             if (CollectionUtils.isEmpty(registries)) {
+                //如果 spring配置和 外部配置中 都不能获取到 registryId
+                //则从配置管理器中 获取 默认 registries
                 setRegistries(
                         ConfigManager.getInstance().getDefaultRegistries()
                         .filter(CollectionUtils::isNotEmpty)
@@ -554,6 +606,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 );
             }
         } else {
+            // 使用 获取到的 registryIds 来构造 registryConfig列表
             String[] ids = Constants.COMMA_SPLIT_PATTERN.split(registryIds);
             List<RegistryConfig> tmpRegistries = CollectionUtils.isNotEmpty(registries) ? registries : new ArrayList<>();
             Arrays.stream(ids).forEach(id -> {
@@ -577,10 +630,15 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     }
 
+    // 从系统变量或者配置文件中 获取 dubbo.registry.address参数值 并 转换为 RegistryConfig列表
+    // 其实 最终配置管理器中 应该只能被添加一个且key为default，因为new 出来的RegistryConfig都是 default RegistryConfig
     private void loadRegistriesFromBackwardConfig() {
         // for backward compatibility
         // -Ddubbo.registry.address is now deprecated.
+        //如果没有配置registries
         if (registries == null || registries.isEmpty()) {
+            //从系统变量或者 配置文件 获取 dubbo.registry.address这个属性值，使用|来分隔并 构造 RegistryConfig列表
+            //将构造得到的 RegistryConfig列表 设置到配置管理器中
             String address = ConfigUtils.getProperty("dubbo.registry.address");
             if (address != null && address.length() > 0) {
                 List<RegistryConfig> tmpRegistries = new ArrayList<RegistryConfig>();
@@ -600,6 +658,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
      * For compatibility purpose, use registry as the default config center if the registry protocol is zookeeper and
      * there's no config center specified explicitly.
      */
+    //为了兼容，如果没有显示配置 config-center，则使用 第一个zk RegistryConfig中的地址作为 外部配置的 zk地址，并更新配置
     private void useRegistryForConfigIfNecessary() {
         registries.stream().filter(RegistryConfig::isZookeeperProtocol).findFirst().ifPresent(rc -> {
             // we use the loading status of DynamicConfiguration to decide whether ConfigCenter has been initiated.

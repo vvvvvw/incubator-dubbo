@@ -35,12 +35,16 @@ import java.util.List;
 public abstract class AbstractConfiguratorListener implements ConfigurationListener {
     private static final Logger logger = LoggerFactory.getLogger(AbstractConfiguratorListener.class);
 
+    //服务治理 外部配置url 解析出来规则，其中有 在配置中心动态配置的规则
     protected List<Configurator> configurators = Collections.emptyList();
 
 
     protected final void initWith(String key) {
+        // 返回动态配置 动态配置中心
         DynamicConfiguration dynamicConfiguration = DynamicConfiguration.getDynamicConfiguration();
+        // 添加外部配置监听器，通过key进行区分
         dynamicConfiguration.addListener(key, this);
+        // 获取初始值
         String rawConfig = dynamicConfiguration.getConfig(key);
         if (!StringUtils.isEmpty(rawConfig)) {
             process(new ConfigChangeEvent(key, rawConfig));
@@ -55,9 +59,11 @@ public abstract class AbstractConfiguratorListener implements ConfigurationListe
         }
 
         if (event.getChangeType().equals(ConfigChangeType.DELETED)) {
+            //如果是删除事件，则清除对应的configurators对象
             configurators.clear();
         } else {
             try {
+                // 负责解析配置生成configurators对象
                 // parseConfigurators will recognize app/service config automatically.
                 configurators = Configurator.toConfigurators(ConfigParser.parseConfigurators(event.getValue()))
                         .orElse(configurators);

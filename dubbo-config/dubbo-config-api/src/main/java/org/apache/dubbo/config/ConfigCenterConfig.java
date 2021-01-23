@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * ConfigCenterConfig
  */
 public class ConfigCenterConfig extends AbstractConfig {
+    // 是否已经初始化
     private AtomicBoolean inited = new AtomicBoolean(false);
 
     private String protocol;
@@ -53,6 +54,7 @@ public class ConfigCenterConfig extends AbstractConfig {
     public ConfigCenterConfig() {
     }
 
+    // 将 configcenter 配置转换为 URL(protocol+address+ path(ConfigCenterConfig)),并将 ConfigCenterConfig的属性和值设置到 url的参数中
     public URL toUrl() {
         Map<String, String> map = this.getMetaData();
         if (StringUtils.isEmpty(address)) {
@@ -61,6 +63,7 @@ public class ConfigCenterConfig extends AbstractConfig {
         map.put(Constants.PATH_KEY, ConfigCenterConfig.class.getSimpleName());
         // use 'zookeeper' as the default configcenter.
         if (StringUtils.isEmpty(map.get(Constants.PROTOCOL_KEY))) {
+            // 如果protocol 为空，默认使用 zookeeper协议，dubbo会根据协议名作为spi扩展名 来寻找扩展
             map.put(Constants.PROTOCOL_KEY, Constants.ZOOKEEPER_PROTOCOL);
         }
         return UrlUtils.parseURL(address, map);
@@ -201,6 +204,7 @@ public class ConfigCenterConfig extends AbstractConfig {
         this.parameters = parameters;
     }
 
+    // 根据address是否设定来判断 configcenter是否启用
     @Override
     @Parameter(excluded = true)
     public boolean isValid() {

@@ -67,10 +67,12 @@ public class RpcUtils {
     }
 
     // TODO why not get return type when initialize Invocation?
+    //获取返回值的类型，返回数组: [返回值类型的rawType，返回值类型(包含泛型)]，如果是future，则使取future中的类型作为返回值类型
     public static Type[] getReturnTypes(Invocation invocation) {
         try {
             if (invocation != null && invocation.getInvoker() != null
                     && invocation.getInvoker().getUrl() != null
+                    //
                     && !invocation.getMethodName().startsWith("$")) {
                 String service = invocation.getInvoker().getUrl().getServiceInterface();
                 if (StringUtils.isNotEmpty(service)) {
@@ -82,8 +84,10 @@ public class RpcUtils {
                         return null;
                     }
                     Class<?> returnType = method.getReturnType();
+                    //获取包含泛型的返回值类型
                     Type genericReturnType = method.getGenericReturnType();
                     if (Future.class.isAssignableFrom(returnType)) {
+                        //如果是 future，则获取future中返回类型
                         if (genericReturnType instanceof ParameterizedType) {
                             Type actualArgType = ((ParameterizedType) genericReturnType).getActualTypeArguments()[0];
                             if (actualArgType instanceof ParameterizedType) {

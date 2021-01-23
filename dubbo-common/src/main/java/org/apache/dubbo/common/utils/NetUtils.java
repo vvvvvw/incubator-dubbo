@@ -127,6 +127,7 @@ public class NetUtils {
                 new InetSocketAddress(port) : new InetSocketAddress(host, port);
     }
 
+    // 判断ip地址是否是正确的ipv4格式或者为 localhost或者127.0.0.1
     static boolean isValidV4Address(InetAddress address) {
         String name = address.getHostAddress();
         return (name != null
@@ -141,13 +142,15 @@ public class NetUtils {
      * @param address the given address
      * @return true if it is reachable
      */
+    // 获取是否是 可以是有效的ipv6地址
     static boolean isValidV6Address(Inet6Address address) {
-        //如果优先获取 ipv6地址
+        //如果可以使用 ipv6地址
         boolean preferIpv6 = Boolean.getBoolean("java.net.preferIPv6Addresses");
         if (!preferIpv6) {
             return false;
         }
         try {
+            //是否能通过 icmp或者 tcp来连接到 对应ip
             return address.isReachable(100);
         } catch (IOException e) {
             // ignore
@@ -191,6 +194,7 @@ public class NetUtils {
         return address;
     }
 
+    // 获取 本机一个可以暴露到公网的ip地址，如果实在没有，则使用127.0.0.1
     public static String getLocalHost() {
         InetAddress address = getLocalAddress();
         return address == null ? Constants.LOCALHOST_VALUE : address.getHostAddress();
@@ -233,7 +237,7 @@ public class NetUtils {
 
     /**
      * Find first valid IP from local network card
-     * 找到第一个本地网卡ip
+     * 找到本机中一个可以暴露到公网的ip
      * @return first valid local IP
      */
     public static InetAddress getLocalAddress() {
@@ -246,7 +250,7 @@ public class NetUtils {
     }
 
     // todo 为什么需要是有效的网关ipv4地址？
-    //是否是有效的 公网ipv4地址 或者 可达的ipv6地址，并正则化
+    //是否是有效的 公网ipv4地址 或者 可达的ipv6地址并规范化
     private static Optional<InetAddress> toValidAddress(InetAddress address) {
         //如果是有效的公网地址
         if (isValidPublicAddress(address)) {
@@ -263,6 +267,7 @@ public class NetUtils {
         return Optional.empty();
     }
 
+    // 获取一个可以暴露到 公网的ip地址
     private static InetAddress getLocalAddress0() {
         InetAddress localAddress = null;
         try {

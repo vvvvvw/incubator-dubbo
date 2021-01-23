@@ -23,6 +23,8 @@ import org.apache.dubbo.common.utils.ConfigUtils;
 /**
  * Configuration from system properties and dubbo.properties
  */
+// 获取配置值，优先级： 系统变量> properties文件（properties文件名： 系统变量dubbo.properties.file、环境变量dubbo.properties.file、dubbo.properties）
+// 如果配置值中有 ${} 占位符，则 替换(优先级：系统变量>properties文件>空字符串)
 public class PropertiesConfiguration extends AbstractPrefixConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(PropertiesConfiguration.class);
 

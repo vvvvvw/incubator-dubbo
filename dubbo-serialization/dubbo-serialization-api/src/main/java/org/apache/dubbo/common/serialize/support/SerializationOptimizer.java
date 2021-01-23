@@ -27,7 +27,7 @@ public interface SerializationOptimizer {
 
     /**
      * Get serializable classes
-     * 需要序列化的类的集合
+     * 需要优化的类集合
      * @return serializable classes
      * */
     Collection<Class> getSerializableClasses();

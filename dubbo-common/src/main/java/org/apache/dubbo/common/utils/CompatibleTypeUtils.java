@@ -38,21 +38,41 @@ public class CompatibleTypeUtils {
     /**
      * Compatible type convert. Null value is allowed to pass in. If no conversion is needed, then the original value
      * will be returned.
+     * 兼容类型转换。 允许传递空值。如果不需要转换，则将返回原始值。
+     * 兼容类型转换如下：
+     *  String -> char, enum, Date,BigInteger,BigDecimal
+     *  byte, short, int, long -> byte, short, int, long
+     *  float, double -> float, double
      * <p>
      * Supported compatible type conversions include (primary types and corresponding wrappers are not listed):
      * <ul>
-     * <li> String -> char, enum, Date
-     * <li> byte, short, int, long -> byte, short, int, long
-     * <li> float, double -> float, double
+     * <li> String -> char, enum, Date（yyyy-MM-dd HH:mm:ss格式），Class,char[],byte, short, int, long,Boolean,float, double,,BigInteger,BigDecimal
+     * <li> byte, short, int, long,float, double,BigInteger,BigDecimal -> byte, short, int, long,float, double,,BigInteger,BigDecimal,Date（时间戳）
+     * <li> Collection -> array，Collection
      * </ul>
      */
+    // null或者type为null 或者 value的类型是type的子类，直接返回 value
+    // value为string，可以转换为：
+    // char或者Character（如果value长度为1）、枚举类型、Class、char[]、BigInteger、BigDecimal、Short、Integer、Long、Double、Float、Byte、Boolean或 其包装类
+    // Date、java.sql.Date、java.sql.Timestamp、java.sql.Time 使用 yyyy-MM-dd HH:mm:ss 格式转换为对应时间类型
+    // value是 Number类型，转换为:
+    // byte、short、int、long、double、double及其包装类、BigInteger、BigDecimal、Date
+    // value是 集合类型，可以转换为：
+    // 数组类型 或者其他 可以实例化且有复制构造函数的 集合类型
+    // value是 数组类型，可以转换为：
+    // List(最终转换为ArrayList) 或者其他 可以实例化且有复制构造函数的 集合类型、Set(最终转换为HashSet)
+    // value是 数组类型，可以转换为：
+    // List(最终转换为ArrayList) 或者其他 可以实例化且有复制构造函数的 集合类型、Set(最终转换为HashSet)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static Object compatibleTypeConvert(Object value, Class<?> type) {
+        //null或者type为null 或者 value的类型是type的子类，直接返回 value
         if (value == null || type == null || type.isAssignableFrom(value.getClass())) {
             return value;
         }
         if (value instanceof String) {
+            // value为string
             String string = (String) value;
+            //如果value长度为1并且 type为 char或者Character，返回 value的第一个元素
             if (char.class.equals(type) || Character.class.equals(type)) {
                 if (string.length() != 1) {
                     throw new IllegalArgumentException(String.format("CAN NOT convert String(%s) to char!" +
@@ -60,8 +80,12 @@ public class CompatibleTypeUtils {
                 }
                 return string.charAt(0);
             } else if (type.isEnum()) {
+                // 转换为枚举类型
                 return Enum.valueOf((Class<Enum>) type, string);
             } else if (type == BigInteger.class) {
+                // 转换为 Class、char[]、BigInteger、BigDecimal、Short、Integer、Long、Double、Float、Byte、Boolean或 其包装类
+                // Date、java.sql.Date、java.sql.Timestamp、java.sql.Time 使用 yyyy-MM-dd HH:mm:ss 格式转换为对应时间类型
+                // 转换为Class 类型
                 return new BigInteger(string);
             } else if (type == BigDecimal.class) {
                 return new BigDecimal(string);
@@ -110,6 +134,8 @@ public class CompatibleTypeUtils {
                 return chars;
             }
         } else if (value instanceof Number) {
+            // value是 Number类型，转换为:
+            //byte、short、int、long、double、double、BigInteger、BigDecimal、Date
             Number number = (Number) value;
             if (type == byte.class || type == Byte.class) {
                 return number.byteValue();
@@ -131,6 +157,8 @@ public class CompatibleTypeUtils {
                 return new Date(number.longValue());
             }
         } else if (value instanceof Collection) {
+            //value是 集合类型，可以转换为：
+            //数组类型 或者其他 可以实例化且有复制构造函数的 集合类型
             Collection collection = (Collection) value;
             if (type.isArray()) {
                 int length = collection.size();
@@ -153,6 +181,8 @@ public class CompatibleTypeUtils {
                 return new HashSet<Object>(collection);
             }
         } else if (value.getClass().isArray() && Collection.class.isAssignableFrom(type)) {
+            // value是 数组类型，可以转换为：
+            // ArrayList 或者其他 可以实例化且有复制构造函数的 集合类型、HashSet
             Collection collection;
             if (!type.isInterface()) {
                 try {

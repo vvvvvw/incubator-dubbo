@@ -47,7 +47,7 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     private static final ReentrantLock LOCK = new ReentrantLock();
 
     // Registry 集合
-    // Registry Collection Map<RegistryAddress, Registry>
+    // Registry Collection Map<{真实的注册中心协议}://注册中心ip/[group/]/org.apache.dubbo.registry.RegistryService:version, Registry>
     private static final Map<String, Registry> REGISTRIES = new HashMap<>();
 
     /**
@@ -91,13 +91,13 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     //先从缓存中取，如果没有命中，则创建注册中心实例
     @Override
     public Registry getRegistry(URL url) {
-        // 修改url
+        // 修改url  {真实的注册中心协议}://注册中心ip+端口/org.apache.dubbo.registry.RegistryService?interface={org.apache.dubbo.registry.RegistryService}&proxy={服务url中的代理参数}和applicationConfig、RegistryConfig中获取的其他查询参数
         url = URLBuilder.from(url)
                 .setPath(RegistryService.class.getName())
                 .addParameter(Constants.INTERFACE_KEY, RegistryService.class.getName())
                 .removeParameters(Constants.EXPORT_KEY, Constants.REFER_KEY)
                 .build();
-        // 计算key值
+        // 计算key值  {真实的注册中心协议}://注册中心ip/[group/]/org.apache.dubbo.registry.RegistryService:version
         String key = url.toServiceStringWithoutResolving();
         // Lock the registry access process to ensure a single instance of the registry
         // 获得锁

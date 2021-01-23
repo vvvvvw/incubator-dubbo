@@ -69,8 +69,8 @@ public interface Configurator extends Comparable<Configurator> {
      * @param urls URL list to convert
      * @return converted configurator list
      */
-    //该方法是处理配置规则url集合，转换覆盖url映射以便在重新引用时使用，
-    // 每次发送所有规则，网址将被重新组装和计算。
+    //该方法是处理外部配置规则url集合，转换覆盖url映射以便在重新引用时使用，
+    //每次处理所有规则，URL将被重新计算。
     //将配置规则解析为 Configurator
     static Optional<List<Configurator>> toConfigurators(List<URL> urls) {
         // 如果为空，则返回空集合
@@ -86,7 +86,7 @@ public interface Configurator extends Comparable<Configurator> {
         //协议为空或者 覆盖的值为空，则清空 前面已经解析的 configurators
         // 遍历url集合
         for (URL url : urls) {
-            //如果是协议是empty的值，则清空配置集合
+            //如果是协议为empty，则清空配置集合
             // protocol 为配置规则中的 override或者 absent
             if (Constants.EMPTY_PROTOCOL.equals(url.getProtocol())) {
                 configurators.clear();
@@ -97,7 +97,7 @@ public interface Configurator extends Comparable<Configurator> {
             //The anyhost parameter of override may be added automatically, it can't change the judgement of changing url
             // 覆盖的anyhost参数可以自动添加，也不能改变更改url的判断
             override.remove(Constants.ANYHOST_KEY);
-            // 如果需要覆盖添加的值为0，则清空配置
+            // 如果需要覆盖添加的值为空，则清空配置
             if (override.size() == 0) {
                 configurators.clear();
                 continue;

@@ -22,6 +22,7 @@ package org.apache.dubbo.common.config;
  * @see PropertiesConfiguration
  * @See ConfigUtils#getProperty(String)
  */
+//从系统变量中 获取 属性值
 public class SystemConfiguration extends AbstractPrefixConfiguration {
 
     public SystemConfiguration(String prefix, String id) {

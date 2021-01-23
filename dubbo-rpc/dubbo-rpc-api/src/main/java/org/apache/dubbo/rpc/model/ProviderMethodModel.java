@@ -18,10 +18,15 @@ package org.apache.dubbo.rpc.model;
 
 import java.lang.reflect.Method;
 
+//服务提供方提供服务的接口方法的相关属性，在 ProviderModel中被设置
 public class ProviderMethodModel {
+    //方法
     private transient final Method method;
+    //方法名
     private final String methodName;
+    //方法参数
     private final String[] methodArgTypes;
+    //对应的服务名：[group/][暴露协议扩展对应的contextPath/]path[:version]  path:默认是 接口类的全限定类名
     private final String serviceName;
 
 

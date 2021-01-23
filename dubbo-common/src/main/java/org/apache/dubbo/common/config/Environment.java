@@ -30,16 +30,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Environment {
     private static final Environment INSTANCE = new Environment();
 
+    //系统变量+配置文件 Map<{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则使用默认值 dubbo，PropertiesConfiguration>
     private Map<String, PropertiesConfiguration> propertiesConfigs = new ConcurrentHashMap<>();
+    //系统变量配置 Map<{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则使用默认值 dubbo，SystemConfiguration>
     private Map<String, SystemConfiguration> systemConfigs = new ConcurrentHashMap<>();
+    //环境变量配置 Map<{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则使用默认值 dubbo，EnvironmentConfiguration>
     private Map<String, EnvironmentConfiguration> environmentConfigs = new ConcurrentHashMap<>();
+    //// 内存配置，其实就是一个LinkedHashMap Map<{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则使用默认值 dubbo，InmemoryConfiguration>
     private Map<String, InmemoryConfiguration> externalConfigs = new ConcurrentHashMap<>();
+    //// 内存配置，其实就是一个LinkedHashMap Map<{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则使用默认值 dubbo，InmemoryConfiguration>
     private Map<String, InmemoryConfiguration> appExternalConfigs = new ConcurrentHashMap<>();
 
-    //全局级别的外部配置
-    private Map<String, String> externalConfigurationMap = new HashMap<>(); //从外部配置中获取值
-    //应用级别的外部配置
-    private Map<String, String> appExternalConfigurationMap = new HashMap<>();
+    //全局级别的外部配置(如果ConfigCenterBean的includeSpringEnv属性为true，也可以获取spring中的属性)
+    private Map<String, String> externalConfigurationMap = new HashMap<>(); //从外部配置中获取值(包括spring environment和外部配置)
+    //应用级别的外部配置(如果ConfigCenterBean的includeSpringEnv属性为true，也可以获取spring中的属性)
+    private Map<String, String> appExternalConfigurationMap = new HashMap<>();//从外部配置中获取值(包括spring environment和外部配置)
 
     private boolean configCenterFirst = true;
 
@@ -113,14 +118,17 @@ public class Environment {
      * @param id
      * @return
      */
+    // 将所有环境配置 按照优先级加载 系统配置>应用级别的外部配置>全局级别的外部配置>配置文件
     public CompositeConfiguration getConfiguration(String prefix, String id) {
         CompositeConfiguration compositeConfiguration = new CompositeConfiguration();
         // Config center has the highest priority
+        //系统配置
         compositeConfiguration.addConfiguration(this.getSystemConfig(prefix, id));
         //应用级别的外部配置
         compositeConfiguration.addConfiguration(this.getAppExternalConfig(prefix, id));
         //全局级别的外部配置
         compositeConfiguration.addConfiguration(this.getExternalConfig(prefix, id));
+        //配置文件
         compositeConfiguration.addConfiguration(this.getPropertiesConfig(prefix, id));
         return compositeConfiguration;
     }
@@ -129,6 +137,7 @@ public class Environment {
         return getConfiguration(null, null);
     }
 
+    // 返回{prefix}{id},如果后缀不是.，则添加上 . ；如果prefix和id 都为空，则返回 dubbo
     private static String toKey(String prefix, String id) {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isNotEmpty(prefix)) {

@@ -30,6 +30,7 @@ import org.apache.dubbo.rpc.RpcException;
 //类也是用了装饰模式，不过该类是invoker和配置中心的适配类，其中也没有进行实际的功能增强。
 public class DelegateProviderMetaDataInvoker<T> implements Invoker {
     protected final Invoker<T> invoker;
+    //生成这个 invoker的 ServiceConfig实例
     private ServiceConfig metadata;
 
     public DelegateProviderMetaDataInvoker(Invoker<T> invoker, ServiceConfig metadata) {

@@ -23,6 +23,7 @@ import org.apache.dubbo.common.utils.StringUtils;
  */
 public abstract class AbstractPrefixConfiguration implements Configuration {
     protected String id;
+    // 拼接在key 前缀 用来查找value，必须以.结尾（如果没有以.结尾，在创建的时候自动添加 .后缀）
     protected String prefix;
 
     public AbstractPrefixConfiguration(String prefix, String id) {
@@ -35,17 +36,21 @@ public abstract class AbstractPrefixConfiguration implements Configuration {
         this.id = id;
     }
 
+    // 优先级：{prefix}{id}.{key} > {prefix}.{key}> {key},如果都没有，则使用默认值
     @Override
     public Object getProperty(String key, Object defaultValue) {
         Object value = null;
         if (StringUtils.isNotEmpty(prefix) && StringUtils.isNotEmpty(id)) {
+            // {prefix}{id}.{key}
             value = getInternalProperty(prefix + id + "." + key);
         }
         if (value == null && StringUtils.isNotEmpty(prefix)) {
+            //  {prefix}.{key}
             value = getInternalProperty(prefix + key);
         }
 
         if (value == null) {
+            //  {key}
             value = getInternalProperty(key);
         }
         return value != null ? value : defaultValue;

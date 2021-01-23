@@ -31,6 +31,7 @@ public class ConsumerMethodModel {
     private final String methodName;
     private final boolean generic;
 
+    // onreturn/oninvoke/onthrow 回调信息
     private final AsyncMethodInfo asyncInfo;
 
 

@@ -80,6 +80,8 @@ public class ConfigManager {
     private ModuleConfig module;
     private ConfigCenterConfig configCenter;
 
+    //只要 key为default的，就是默认配置
+    // Map<key({配置类实例id属性，其实就是beanname}>default{如果default属性为null或者为true})，配置类>
     private Map<String, ProtocolConfig> protocols = new ConcurrentHashMap<>();
     private Map<String, RegistryConfig> registries = new ConcurrentHashMap<>();
     private Map<String, ProviderConfig> providers = new ConcurrentHashMap<>();
@@ -141,10 +143,12 @@ public class ConfigManager {
         return Optional.ofNullable(providers.get(id));
     }
 
+    // 获取默认的provider
     public Optional<ProviderConfig> getDefaultProvider() {
         return Optional.ofNullable(providers.get(DEFAULT_KEY));
     }
 
+    //添加 provider，{配置类实例id属性}>default{如果default属性为null或者为true}
     public void addProvider(ProviderConfig providerConfig) {
         if (providerConfig == null) {
             return;

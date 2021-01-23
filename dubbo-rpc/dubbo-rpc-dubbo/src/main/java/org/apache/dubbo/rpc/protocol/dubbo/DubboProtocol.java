@@ -86,13 +86,13 @@ public class DubboProtocol extends AbstractProtocol {
     private final Map<String, List<ReferenceCountExchangeClient>> referenceClientMap = new ConcurrentHashMap<>();
     //锁集合
     private final ConcurrentMap<String, Object> locks = new ConcurrentHashMap<>();
-    //序列化类名集合
+    //Set<SerializationOptimizer>
     private final Set<String> optimizers = new ConcurrentHashSet<>();
     /**
      * consumer side export a stub service for dispatching event
      * servicekey-stubmethods
      */
-    //本地存根服务方法集合
+    //本地存根服务方法集合 Map<{group}/{interfaceName}:{version},本地存根方法列表>
     private final ConcurrentMap<String, String> stubServiceMethodsMap = new ConcurrentHashMap<>();
 
     //实现了基于dubbo协议等连接、取消连接、回复请求结果等方法。
@@ -242,7 +242,7 @@ public class DubboProtocol extends AbstractProtocol {
         return exporterMap;
     }
 
-    //如果是 作为客户端(对于本地回调来说，服务端就是 本地回调服务的客户端)
+    //对于本次调用来说，是否 作为客户端（如果远程address==channel的url对应的address，远程port == channel的url对应的port）
     private boolean isClientSide(Channel channel) {
         InetSocketAddress address = channel.getRemoteAddress();
         URL url = channel.getUrl();
@@ -251,13 +251,13 @@ public class DubboProtocol extends AbstractProtocol {
                         .equals(NetUtils.filterLocalHost(address.getAddress().getHostAddress()));
     }
 
-    //todo ？ 这边本地存根和回调的逻辑是没有看懂的
+    //根据 channel和inv 获取 对应的服务的 exporter
     Invoker<?> getInvoker(Channel channel, Invocation inv) throws RemotingException {
         boolean isCallBackServiceInvoke = false;
         boolean isStubServiceInvoke = false;
         //本地服务端口
         int port = channel.getLocalAddress().getPort();
-        //请求的服务   回调服务接口全限定类名
+        //具体请求的服务的全限定类名(在客户端接收服务端回调时为 回调接口全限定类名)
         String path = inv.getAttachments().get(Constants.PATH_KEY);
 
         //是否 是客户端本地存根
@@ -268,17 +268,19 @@ public class DubboProtocol extends AbstractProtocol {
             port = channel.getRemoteAddress().getPort();
         }
 
-        //是否是作为本地回调的客户端，且不是本地存根 //如果是 作为客户端(对于本地回调来说，服务端就是 客户端本地回调服务的客户端)
+        //是否是服务的客户端（不是指回调服务的客户端，是 客户端调用的服务的客户端 ），且不是本地存根 //如果是 作为客户端
         //callback
         isCallBackServiceInvoke = isClientSide(channel) && !isStubServiceInvoke;
         if (isCallBackServiceInvoke) {
-            // path = {回调服务接口的全限定类名}.null
+            //todo
             path += "." + inv.getAttachments().get(Constants.CALLBACK_SERVICE_KEY);
             // 向attachments中添加 _isCallBackServiceInvoke:true
             inv.getAttachments().put(IS_CALLBACK_SERVICE_INVOKE, Boolean.TRUE.toString());
         }
 
+        // 得到本次要调用(不是回调服务)的服务的key group+"/"+serviceName+":"+serviceVersion+":"+port
         String serviceKey = serviceKey(port, path, inv.getAttachments().get(Constants.VERSION_KEY), inv.getAttachments().get(Constants.GROUP_KEY));
+        // 获取本次服务的exporter
         DubboExporter<?> exporter = (DubboExporter<?>) exporterMap.get(serviceKey);
 
         if (exporter == null) {
@@ -343,7 +345,7 @@ public class DubboProtocol extends AbstractProtocol {
         // find server.
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
-        // 客户端是否可以暴露仅供服务器调用的服务（todo 这个key不懂是什么意思，服务端暴露的时候 value为null）
+        // 导出时是否启动服务器(对于callbackservice和本地存根 导出，不启动服务器)
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
         // 如果是的话
         if (isServer) {
@@ -373,6 +375,7 @@ public class DubboProtocol extends AbstractProtocol {
      */
     private ExchangeServer createServer(URL url) {
         // 服务器关闭时发送readonly事件，默认情况下启用
+        //{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数&channel.readonly.sent={当服务器关闭的时候，发送readonly事件true}&heartbeat={心跳时间间隔，默认1分钟}&codec=dubbo
         url = URLBuilder.from(url)
                 // send readonly event when server closes, it's enabled by default
                 .addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())

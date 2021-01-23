@@ -108,13 +108,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * The urls of the services exported
      */
-    //记录已经暴露的服务(包括scope为none，什么都不做的)
+    //记录已经暴露的服务url(包括scope为none，什么都不做的，包括使用 injvm的)
     private final List<URL> urls = new ArrayList<URL>();
 
     /**
      * The exported services
      */
-    //已经发布的服务(不包括scope为none，什么都不做的)
+    //已经发布的服务(不包括scope为none，什么都不做的)（包括由于没有配置注册中心，因此没有暴露到注册中心的）
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
 
     /**
@@ -135,7 +135,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * The service name
      */
-    //服务名
+    //服务名(如果没有设置，则默认值使用 接口权限定类名)
     private String path;
 
     /**
@@ -162,14 +162,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * The flag whether a service has unexported ,if the method unexported is invoked, the value is true
      */
-    // TODO: 什么情况下不允许export  by 15258 2019/6/3 22:30
-    //是否已经不允许export
+    //是否 服务被取消导出了
     private transient volatile boolean unexported;
 
     /**
      * whether it is a GenericService
      */
-    //是否是 泛化实现
+    //是否是 泛化实现类
     private volatile String generic;
 
     public ServiceConfig() {
@@ -267,23 +266,32 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return unexported;
     }
 
-    //该方法中是对各类配置的校验，并且更新部分配置
+    //该方法中是对各类配置的校验，并检查补全相关配置
     public void checkAndUpdateSubConfigs() {
         // 用于检测 provider、application 等核心配置类对象是否为空，
         // 若为空，则尝试从其他配置类对象中获取相应的实例。
         // Use default configs defined explicitly on global configs
+        //ProviderConfig > ModuleConfig > ApplicationConfig，同时完善（application、module、registries、monitor、protocols、configCenter）这些配置
         completeCompoundConfigs();
         // 开启配置中心
         // Config Center should always being started first.
         startConfigCenter();
-        // 检测 provider 是否为空，为空则新建一个，并通过系统变量为其初始化
+        // 检测 provider 是否为空，为空获取默认的provider，如果默认的provider也没有则新建一个默认的并设置到配置管理器中，并通过配置为其初始化
         checkDefault();
-        // 检查application是否为空
+        // 1.检测 applicationConfig 是否为空，为空获取默认的applicationConfig，如果默认的applicationConfig也没有则新建一个默认的，并通过配置为其初始化
+        // 2.设置application到配置管理器和ApplicationModel 中
+        // 3.从配置文件或者系统变量中获取 服务端启动的服务器的关闭的等待时间 并设置到系统变量中
         checkApplication();
-        // 检查注册中心是否为空
+        //1.构建 RegistryConfig列表
+        //直接能获取地址：从系统变量或者配置文件中 获取 dubbo.registry.address参数值
+        //通过 registryIds：registryIds{spring配置文件} >registryIds{外部配置中前缀为dubbo.registries.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认registryConfig
+        //2.如果没有显示配置 config-center，则使用 第一个zk RegistryConfig中的地址作为 外部配置的 zk地址，并更新配置
         checkRegistry();
-        // 检查protocols是否为空
+        //1.构建 ProtocolConfig列表
+        //从 对应的provider中获取 protocol
+        //通过 protocolIds：protocolIds{spring配置文件} >protocolIds(ProtocolConfig的前缀就是dubbo.protocols.){外部配置中前缀为dubbo.protocols.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认protocolConfig
         checkProtocol();
+        // 从配置中心获取相应配置并更新ServiceConfig的相关字段
         this.refresh();
         // 核对元数据中心配置是否为空
         checkMetadataReport();
@@ -356,7 +364,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     // 如果不应该暴露，则直接结束，然后检测是否配置了延迟加载，
     // 如果是，则使用定时器来实现延迟加载的目的。
     public synchronized void export() {
-        //检查并且更新配置
+        //检查并且补全相关配置
         checkAndUpdateSubConfigs();
 
         // 如果不应该暴露，则直接结束
@@ -373,14 +381,16 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
     }
 
-    //// 是否应该暴露
+    //// 是否允许暴露
     //返回export属性 ->provider.getExport
     private boolean shouldExport() {
         Boolean shouldExport = getExport();
         if (shouldExport == null && provider != null) {
+            //如果没有设置，则获取provider的 是否允许暴露 的配置
             shouldExport = provider.getExport();
         }
 
+        //默认值是 true
         // default value is true
         if (shouldExport == null) {
             return true;
@@ -390,6 +400,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     //根据条件决定是否导出服务
+    // 本身delay配置 -> provider.getDelay()
     private boolean shouldDelay() {
         // 获取 delay
         Integer delay = getDelay();
@@ -402,7 +413,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     //对于服务是否暴露在一次校验，然后会执行ServiceConfig的doExportUrls()方法，对于多协议多注册中心暴露服务进行支持。
     protected synchronized void doExport() {
-        // 如果调用不暴露的方法，则unexported值为true
+        // 如果调用了取消暴露的方法，则unexported值为true
         if (unexported) {
             throw new IllegalStateException("The service " + interfaceClass.getName() + " has already unexported!");
         }
@@ -434,6 +445,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     public synchronized void unexport() {
+        //如果不是出于导出状态
         if (!exported) {
             return;
         }
@@ -465,7 +477,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // 遍历 protocols，并在每个协议下暴露服务
 
         for (ProtocolConfig protocolConfig : protocols) {
-            // 以contextPath、path、group、version来作为服务唯一性确定的key
+            // 以contextPath、path、group、version来作为服务唯一性确定的key [group/][暴露协议扩展对应的contextPath/]path[:version]
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
             ProviderModel providerModel = new ProviderModel(pathKey, ref, interfaceClass);
             ApplicationModel.initProviderModel(pathKey, providerModel);
@@ -525,8 +537,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         map.put(method.getName() + ".retries", "0");
                     }
                 }
-                // 获得ArgumentConfig列表
-                // TODO: 这个是什么列表  by 15258 2019/6/4 7:30
+                // 获得ArgumentConfig列表(专门用于 参数回调 这个功能)
                 List<ArgumentConfig> arguments = method.getArguments();
                 if (CollectionUtils.isNotEmpty(arguments)) {
                     //arguments中只包含了一个属性 {方法名}.{参数index}.callback -> true/false
@@ -595,7 +606,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             map.put(Constants.GENERIC_KEY, generic);
             map.put(Constants.METHODS_KEY, Constants.ANY_VALUE);
         } else {
-            // 获得版本号
+            // 获得 jar包修订版本
             String revision = Version.getVersion(interfaceClass, version);
             // 放入map
             if (revision != null && revision.length() > 0) {
@@ -623,12 +634,13 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.TOKEN_KEY, token);
             }
         }
-        // 获得地址
+        // 获取服务提供者用来绑定的IP地址并设置到 查询参数中，key: bind.ip,并返回 用来注册到注册中心的ip地址
         // export service
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
-        // 获得端口号
+        // 获取服务提供者用来绑定的端口号并设置到 查询参数中，key: bind.port,并返回 用来注册到注册中心的port
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         // 生成　URL
+        // {暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
 
         // —————————————————————————————————————开始发布———————————————————————————————————————
@@ -637,7 +649,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         // 加载 ConfiguratorFactory，并生成 Configurator 实例，判断是否有该协议的实现存在
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
-            // 通过实例配置 url
+            //如果 协议名 为 override或者absert
+            //根据url中的查询参数 改写，todo 这个地方能改写 url协议么？
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
         }
@@ -665,7 +678,6 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         // 添加dynamic配置
                         url = url.addParameterIfAbsent(Constants.DYNAMIC_KEY, registryURL.getParameter(Constants.DYNAMIC_KEY));
                         // 加载监视器链接
-                        // TODO: 监视器是个什么  by 15258 2019/6/4 8:26
                         URL monitorUrl = loadMonitor(registryURL);
                         if (monitorUrl != null) {
                             // 添加监视器配置
@@ -697,6 +709,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                     Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                    //直接暴露服务
                     Exporter<?> exporter = protocol.export(wrapperInvoker);
                     exporters.add(exporter);
                 }
@@ -718,9 +731,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     //本地暴露调用的是injvm协议方法，也就是InjvmProtocol 的 export()方法
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void exportLocal(URL url) {
-        // 如果 URL 的协议头等于 injvm，说明导出到远程就是导出到本地了，无需再次导出
+        // 如果 URL 暴露的协议是 injvm，说明导出到远程就是导出到本地了，因此在导出到远程的时候再执行 导出到jvm的操作
+        // todo 其实，老版本 这个地方根本没有做判断拦截
         if (!Constants.LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
-            // 生成本地的url,分别把协议改为injvm，设置host和port
+            // 生成本地的url,分别把协议改为injvm，更新url injvm://127.0.0.1:0//[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
             URL local = URLBuilder.from(url)
                     .setProtocol(Constants.LOCAL_PROTOCOL)
                     .setHost(LOCALHOST_VALUE)
@@ -736,6 +750,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
     }
 
+    //获取 contextPath，本身配置 > provider配置
     private Optional<String> getContextPath(ProtocolConfig protocolConfig) {
         String contextPath = protocolConfig.getContextpath();
         if (StringUtils.isEmpty(contextPath) && provider != null) {
@@ -758,6 +773,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      * @param map
      * @return
      */
+    // 获取服务提供者用来绑定的IP地址并设置到 查询参数中，key: bind.ip,并返回 用来注册到注册中心的ip地址
+    // key优先级： {暴露服务协议对应的扩展名的大写形式}_{key} >{key}
+    // 配置优先级：环境变量-> Java系统属性-> 从本机网卡 获取可供暴露到公网的ip地址
     private String findConfigedHosts(ProtocolConfig protocolConfig, List<URL> registryURLs, Map<String, String> map) {
         boolean anyhost = false;
 
@@ -765,16 +783,20 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
         // if bind ip is not found in environment, keep looking up
         if (StringUtils.isEmpty(hostToBind)) {
+            //protocolConfig中指定的 主机ip
             hostToBind = protocolConfig.getHost();
             if (provider != null && StringUtils.isEmpty(hostToBind)) {
+                // provider中指定的主机 ip
                 hostToBind = provider.getHost();
             }
 
             if (StringUtils.isEmpty(hostToBind)) {
                 anyhost = true;
+                // 获取 本机一个可以暴露到公网的ip地址，如果实在没有，则使用127.0.0.1
                 hostToBind = getLocalHost();
 
                 if (StringUtils.isEmpty(hostToBind)) {
+                    //其实根本不会走到这一步(通过 socket依次连接 注册中心，如果能连接成功，则获取 socket.getLocalAddress().getHostAddress())
                     hostToBind = findHostToBindByConnectRegistries(registryURLs);
                 }
             }
@@ -783,6 +805,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         map.put(Constants.BIND_IP_KEY, hostToBind);
 
         // registry ip is not used for bind ip by default
+        //
         String hostToRegistry = getValueFromConfig(protocolConfig, Constants.DUBBO_IP_TO_REGISTRY);
         if (StringUtils.isEmpty(hostToRegistry)) {
             // bind ip is used as registry ip by default
@@ -794,6 +817,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return hostToRegistry;
     }
 
+    //通过 socket依次连接 注册中心，如果能连接成功，则获取 socket.getLocalAddress().getHostAddress()
     private String findHostToBindByConnectRegistries(List<URL> registryURLs) {
         if (CollectionUtils.isNotEmpty(registryURLs)) {
             for (URL registryURL : registryURLs) {
@@ -822,6 +846,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
      * @param name
      * @return
      */
+    // 获取服务提供者用来绑定的端口号并设置到 查询参数中，key: bind.port,并返回 用来注册到注册中心的port
+    // key优先级： {暴露服务协议对应的扩展名的大写形式}_{key} >{key}
+    // 配置优先级：环境变量-> 系统变量 -> 协议对应扩展的默认端口 -> 随机可用端口
     private Integer findConfigedPorts(ProtocolConfig protocolConfig, String name, Map<String, String> map) {
         Integer portToBind = null;
 
@@ -831,14 +858,17 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
         // if there's no bind port found from environment, keep looking up.
         if (portToBind == null) {
+            // 从 本身配置> Provider配置中 获取ip
             portToBind = protocolConfig.getPort();
             if (provider != null && (portToBind == null || portToBind == 0)) {
                 portToBind = provider.getPort();
             }
+            //从 协议扩展中获取 默认ip
             final int defaultPort = ExtensionLoader.getExtensionLoader(Protocol.class).getExtension(name).getDefaultPort();
             if (portToBind == null || portToBind == 0) {
                 portToBind = defaultPort;
             }
+            // 获取随机可用端口
             if (portToBind == null || portToBind <= 0) {
                 portToBind = getRandomPort(name);
                 if (portToBind == null || portToBind < 0) {
@@ -877,6 +907,14 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return port;
     }
 
+    /**
+     * 从 环境变量和系统变量中 获取对应配置
+     * 配置优先级：环境变量>系统变量
+     * key优先级： {暴露服务协议对应的扩展名的大写形式}_{key} >{key}
+     * @param protocolConfig
+     * @param key
+     * @return
+     */
     private String getValueFromConfig(ProtocolConfig protocolConfig, String key) {
         String protocolPrefix = protocolConfig.getName().toUpperCase() + "_";
         String port = ConfigUtils.getSystemProperty(protocolPrefix + key);
@@ -887,6 +925,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     //完善组件配置
+    // ProviderConfig（application、module、registries、monitor、protocols、configCenter） > ModuleConfig（registries，monitor） > ApplicationConfig（registries，monitor）
     private void completeCompoundConfigs() {
         if (provider != null) {
             if (application == null) {
@@ -926,6 +965,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
     }
 
+    // 检测 provider 是否为空，为空获取默认的provider，如果默认的provider也没有则新建一个默认的并设置到配置管理器中，并通过配置为其初始化
     private void checkDefault() {
         createProviderIfAbsent();
     }
@@ -945,13 +985,18 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         );
     }
 
+    //1.构建 ProtocolConfig列表
+    //从 对应的provider中获取 protocol
+    //通过 protocolIds：protocolIds{spring配置文件} >protocolIds(ProtocolConfig的前缀就是dubbo.protocols.){外部配置中前缀为dubbo.protocols.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认protocolConfig
     private void checkProtocol() {
+        //如果没有指定 protocols，则使用 对应的provider中的protocol
         if (CollectionUtils.isEmpty(protocols) && provider != null) {
             setProtocols(provider.getProtocols());
         }
         convertProtocolIdsToProtocols();
     }
 
+    //通过 protocolIds：protocolIds{spring配置文件} >protocolIds(ProtocolConfig的前缀就是dubbo.protocols.){外部配置中前缀为dubbo.protocols.的key并收集 子字符串（从 prefix+1-> 第一个.为止）} > 配置管理其中的默认protocolConfig
     private void convertProtocolIdsToProtocols() {
         if (StringUtils.isEmpty(protocolIds) && CollectionUtils.isEmpty(protocols)) {
             List<String> configedProtocols = new ArrayList<>();

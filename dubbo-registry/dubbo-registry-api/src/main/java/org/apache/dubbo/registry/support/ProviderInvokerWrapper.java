@@ -29,13 +29,13 @@ import org.apache.dubbo.rpc.RpcException;
 public class ProviderInvokerWrapper<T> implements Invoker {
     // Invoker对象
     private Invoker<T> invoker;
-    // 原始url
+    // 原始url（ {暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数）
     private URL originUrl;
-    // 注册中心url
+    // 注册中心url（{真实的注册中心协议}://注册中心ip+端口/org.apache.dubbo.registry.RegistryService?registry={注册中心协议(如果从注册中心地址获取不到协议，默认dubbo)}&export={服务url的toString(其中包括serviceConfig组装出来的各种参数)}&proxy={服务url中的代理参数}和applicationConfig、RegistryConfig中获取的其他查询参数 ）
     private URL registryUrl;
-    // 服务提供者url
+    // 服务提供者url(已经简化参数，原始为： {暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数)
     private URL providerUrl;
-    // 是否已经注册都注册中心
+    // 是否已经注册到了注册中心
     private volatile boolean isReg;
 
     public ProviderInvokerWrapper(Invoker<T> invoker,URL registryUrl,URL providerUrl) {

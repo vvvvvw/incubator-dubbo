@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 
 /**
- *
+ * ZookeeperDynamicConfiguration 中真正和zk交互的类
  */
 
 public class CacheListener implements DataListener {
@@ -65,6 +65,7 @@ public class CacheListener implements DataListener {
      * @param path
      * @return key (nodePath less the config root path)
      */
+    // zk path到key的转换，去除 根路径，并将 /转换为 .
     private String pathToKey(String path) {
         if (StringUtils.isEmpty(path)) {
             return path;
@@ -91,7 +92,9 @@ public class CacheListener implements DataListener {
         // TODO We limit the notification of config changes to a specific path level, for example
         //  /dubbo/config/service/configurators, other config changes not in this level will not get notified,
         //  say /dubbo/config/dubbo.properties
+        //
         if (path.split("/").length >= MIN_PATH_DEPTH) {
+            //装换为key
             String key = pathToKey(path);
             ConfigChangeType changeType;
             switch (eventType) {
@@ -115,4 +118,5 @@ public class CacheListener implements DataListener {
             }
         }
     }
+
 }

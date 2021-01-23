@@ -36,8 +36,10 @@ import java.util.Map;
  */
 public class ConfigParser {
 
+    // 将外部动态yml配置解析为 url
     public static List<URL> parseConfigurators(String rawConfig) {
         List<URL> urls = new ArrayList<>();
+        // 将配置解析为 ConfiguratorConfig对象
         ConfiguratorConfig configuratorConfig = parseObject(rawConfig);
 
         String scope = configuratorConfig.getScope();
@@ -62,25 +64,33 @@ public class ConfigParser {
         return yaml.load(rawConfig);
     }
 
+    // (每一个address，每一个应用名一个url)override://address/{接口的全限定类名}?[group={group}]&[version={version}]&category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)&enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}&category=dynamicconfigurators&&configVersion={配置中的ConfigVersion}&application={配置的应用名1}
     private static List<URL> serviceItemToUrls(ConfigItem item, ConfiguratorConfig config) {
         List<URL> urls = new ArrayList<>();
+        //从item中获取 应用 该配置的 ip地址，如果为空，则表示应用到所有符合条件的ip上，使用 ANYHOST_VALUE("0.0.0.0")
         List<String> addresses = parseAddresses(item);
 
         addresses.forEach(addr -> {
             StringBuilder urlBuilder = new StringBuilder();
+            // override://address/
             urlBuilder.append("override://").append(addr).append("/");
 
+            // {接口的全限定类名}?[group={group}]&[version={version}]
             urlBuilder.append(appendService(config.getKey()));
+            //从item中获取构建查询参数并封装： category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)
             urlBuilder.append(toParameterString(item));
 
+            //enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}
             parseEnabled(item, config, urlBuilder);
 
+            //&category=dynamicconfigurators&&configVersion={配置中的ConfigVersion}
             urlBuilder.append("&category=").append(Constants.DYNAMIC_CONFIGURATORS_CATEGORY);
             urlBuilder.append("&configVersion=").append(config.getConfigVersion());
 
             List<String> apps = item.getApplications();
             if (apps != null && apps.size() > 0) {
                 apps.forEach(app -> {
+                    //&application={配置的应用名}...
                     urls.add(URL.valueOf(urlBuilder.append("&application=").append(app).toString()));
                 });
             } else {
@@ -91,11 +101,16 @@ public class ConfigParser {
         return urls;
     }
 
+    // 没有指定服务key: override://{应用配置的节点ip(每个ip一个url)}/*?category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)&application={配置中的key}&enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}&category=appdynamicconfigurators&configVersion={ConfiguratorConfig的configversion参数}
+    // 指定了 服务key: override://{应用配置的节点ip(每个ip一个url)}/{服务接口名(每个服务一个url，todo ？ 这段代码多服务是不是有bug，在服务循环的时候 没有把 上一次添加的接口名等信息去除)}?[group={group}]&[version={version}]category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)&application={配置中的key}&enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}&category=appdynamicconfigurators&configVersion={ConfiguratorConfig的configversion参数}
     private static List<URL> appItemToUrls(ConfigItem item, ConfiguratorConfig config) {
         List<URL> urls = new ArrayList<>();
+        //从item中获取 应用 该配置的 ip地址，如果为空，则表示应用到所有符合条件的ip上，使用 ANYHOST_VALUE("0.0.0.0")
         List<String> addresses = parseAddresses(item);
         for (String addr : addresses) {
             StringBuilder urlBuilder = new StringBuilder();
+            // override://{应用本写配置的节点ip}/*（如果item没有配置services参数）
+            // override://{应用本写配置的节点ip}/*（如果item配置services参数）
             urlBuilder.append("override://").append(addr).append("/");
             List<String> services = item.getServices();
             if (services == null) {
@@ -105,14 +120,19 @@ public class ConfigParser {
                 services.add("*");
             }
             for (String s : services) {
+                //servicekey格式：[group/]{接口的全限定类名}:[version]
+                // {接口的全限定类名}?[group={group}]&[version={version}]
                 urlBuilder.append(appendService(s));
+                //category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)
                 urlBuilder.append(toParameterString(item));
-
+                //&application={配置中的key}
                 urlBuilder.append("&application=").append(config.getKey());
-
+                //&enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}
                 parseEnabled(item, config, urlBuilder);
 
+                //&category=appdynamicconfigurators
                 urlBuilder.append("&category=").append(Constants.APP_DYNAMIC_CONFIGURATORS_CATEGORY);
+                //&configVersion={ConfiguratorConfig的configversion参数}
                 urlBuilder.append("&configVersion=").append(config.getConfigVersion());
 
                 urls.add(URL.valueOf(urlBuilder.toString()));
@@ -121,6 +141,7 @@ public class ConfigParser {
         return urls;
     }
 
+    //从item中获取构建查询参数并封装： category=dynamicconfigurators&&side={ConfigItem中配置的side}&providerAddresses={ConfigItem中配置的providerAddresses，逗号分隔}...(ConfigItem中的参数)
     private static String toParameterString(ConfigItem item) {
         StringBuilder sb = new StringBuilder();
         sb.append("category=");
@@ -152,6 +173,10 @@ public class ConfigParser {
         return sb.toString();
     }
 
+
+
+    //servicekey格式：[group/]{接口的全限定类名}:[version]
+    // {接口的全限定类名}?[group={group}]&[version={version}]
     private static String appendService(String serviceKey) {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(serviceKey)) {
@@ -179,6 +204,12 @@ public class ConfigParser {
         return sb.toString();
     }
 
+    public static void main(String[] args) {
+        String servicekey = "52rp/demoService:520";
+        System.out.println(appendService(servicekey));
+    }
+
+    // enabled={enabled(如果item的type参数为空或者为general，则启用 外部ConfiguratorConfig的enable参数)}
     private static void parseEnabled(ConfigItem item, ConfiguratorConfig config, StringBuilder urlBuilder) {
         urlBuilder.append("&enabled=");
         if (item.getType() == null || ConfigItem.GENERAL_TYPE.equals(item.getType())) {
@@ -188,6 +219,11 @@ public class ConfigParser {
         }
     }
 
+    /**
+     * 从item中获取 应用 该配置的 ip地址，如果为空，则表示应用到所有符合条件的ip上，使用 ANYHOST_VALUE("0.0.0.0")
+     * @param item
+     * @return
+     */
     private static List<String> parseAddresses(ConfigItem item) {
         List<String> addresses = item.getAddresses();
         if (addresses == null) {

@@ -39,10 +39,16 @@ import java.util.concurrent.CompletableFuture;
 public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
     Logger logger = LoggerFactory.getLogger(AbstractProxyInvoker.class);
 
+    //服务端：外部传入的服务实现类(是wrapper之前的)
     private final T proxy;
 
+    //服务端：服务接口
     private final Class<T> type;
 
+    // 服务端：这个url其实是暴露协议的url，其中protocol为 暴露协议，host和端口为暴露到外部的主机名和端口，其他查询参数也是从 各个配置类 根据混合配置 最终组装成的
+    // 如果是 injvm的话，injvm://127.0.0.1:0//[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
+    // 如果是 暴露到注册中心url的话，registry://注册中心ip+端口/org.apache.dubbo.registry.RegistryService?registry={注册中心协议(如果从注册中心地址获取不到协议，默认dubbo)}&export={服务url的toString(其中包括serviceConfig组装出来的各种参数)}&proxy={服务url中的代理参数}和applicationConfig、RegistryConfig中获取的其他查询参数 服务url：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
+    // 如果没有配置中心的话，则是 服务类url：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
     private final URL url;
 
     public AbstractProxyInvoker(T proxy, Class<T> type, URL url) {

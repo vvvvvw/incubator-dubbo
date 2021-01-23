@@ -141,8 +141,11 @@ public final class Version {
         return "";
     }
 
+
+    //从jar包的MANIFEST.MF文件> jar包文件名中获取版本号
     public static String getVersion(Class<?> cls, String defaultVersion) {
         try {
+            //从 jar包的MANIFEST.MF中获取 版本号
             // find version info from MANIFEST.MF first
             Package pkg = cls.getPackage();
             String version = null;
@@ -157,7 +160,8 @@ public final class Version {
                     return version;
                 }
             }
-            
+
+            //
             // guess version fro jar file name if nothing's found from MANIFEST.MF
             CodeSource codeSource = cls.getProtectionDomain().getCodeSource();
             if (codeSource == null) {
@@ -182,22 +186,27 @@ public final class Version {
     /**
      * get version from file: path/to/group-module-x.y.z.jar, returns x.y.z
      */
+    //根据 jar包文件名 获取 版本号
     private static String getFromFile(String file) {
+        // 去除 .jar 后缀
         // remove suffix ".jar": "path/to/group-module-x.y.z"
         file = file.substring(0, file.length() - 4);
-        
+
+        // 去除 jar包的 目录
         // remove path: "group-module-x.y.z"
         int i = file.lastIndexOf('/');
         if (i >= 0) {
             file = file.substring(i + 1);
         }
-        
+
+        // 去除 第一个 - 之前的字符
         // remove group: "module-x.y.z"
         i = file.indexOf("-");
         if (i >= 0) {
             file = file.substring(i + 1);
         }
-        
+
+        // 循环去除 所有的 - 之前的字符，如果 在去除的过程中，一个字符是数字，则跳出
         // remove module: "x.y.z"
         while (file.length() > 0 && !Character.isDigit(file.charAt(0))) {
             i = file.indexOf("-");

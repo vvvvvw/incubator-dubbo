@@ -151,6 +151,7 @@ public abstract class Wrapper {
         // todo 判断c是否继承 ClassGenerator.DC.class (通过dubbo assist动态生成的类会实现这个接口)，递归直到则拿到父类，避免重复包装
         while (ClassGenerator.isDynamicClass(c)) // can not wrapper on dynamic class.
         {
+            //循环直到拿到 非Wrapper.getWrapper生成的父类，然后通过这个父类 生成动态类
             //得到 父类 Proxy对象
             c = c.getSuperclass();
         }

@@ -40,6 +40,7 @@ import java.util.Map;
  * @see org.apache.dubbo.cache.support.AbstractCacheFactory
  * @see org.apache.dubbo.cache.filter.CacheFilter
  */
+//有过期时间的缓存
 public class ExpiringCache implements Cache {
     private final Map<Object, Object> store;
 

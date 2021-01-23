@@ -62,6 +62,7 @@ public class MergeableClusterInvoker<T> extends AbstractClusterInvoker<T> {
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         checkInvokers(invokers, invocation);
+        // 得到配置的merger参数值
         String merger = getUrl().getMethodParameter(invocation.getMethodName(), Constants.MERGER_KEY);
         // 如果没有设置需要聚合，则只调用一个invoker的
         if (ConfigUtils.isEmpty(merger)) { // If a method doesn't have a merger, only invoke one Group
@@ -72,6 +73,7 @@ public class MergeableClusterInvoker<T> extends AbstractClusterInvoker<T> {
                         return invoker.invoke(invocation);
                     } catch (RpcException e) {
                         if (e.isNoInvokerAvailableAfterFilter()) {
+                            //如果报错是因为对应group么有相关的invoker，则尝试其他的invoker
                             log.debug("No available provider for service" + directory.getUrl().getServiceKey() + " on group " + invoker.getUrl().getParameter(Constants.GROUP_KEY) + ", will continue to try another group.");
                         } else {
                             throw e;
@@ -92,7 +94,8 @@ public class MergeableClusterInvoker<T> extends AbstractClusterInvoker<T> {
             returnType = null;
         }
 
-        // TODO: 分组聚合获取到的的invokers不是每个group一个的吧？  by 15258 2019/6/2 10:29
+        // TODO: 分组聚合获取到的的invokers是每个group一个(当只有一个group但是有多个提供者的时候，会返回一个列表
+        //  但是 后面会通过invoker.getUrl().getServiceKey() 来保证只返回一个提供者的返回值)
         // 结果集合
         Map<String, Future<Result>> results = new HashMap<String, Future<Result>>();
         // 循环invokers
@@ -106,6 +109,10 @@ public class MergeableClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 }
             });
             // 加入集合
+            // serviceKey非常重要--serviceKey的值为: groupName/serviceInterface:version,
+            // 如果version没有申明, serviceKey的值为: groupName/serviceInterface
+            // 如果group没有申明, serviceKey的值为: serviceInterface:version
+            // 如果version和group都没有申明, serviceKey的值为: serviceInterface
             results.put(invoker.getUrl().getServiceKey(), future);
         }
 

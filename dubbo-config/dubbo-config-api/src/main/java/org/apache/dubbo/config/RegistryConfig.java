@@ -411,6 +411,8 @@ public class RegistryConfig extends AbstractConfig {
     public void refresh() {
         super.refresh();
         if (StringUtils.isNotEmpty(this.getId())) {
+            //设置前缀为 dubbo.registries.
+            //对于 RegistryConfig 的所有属性值从多层配置中获取的key为 dubbo.registries.{id}.{属性名} >  dubbo.registries.{属性名} > {属性名}
             this.setPrefix(Constants.REGISTRIES_SUFFIX);
             super.refresh();
         }

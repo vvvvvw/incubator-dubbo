@@ -42,14 +42,22 @@ public class UrlUtils {
      */
     private final static String URL_PARAM_STARTING_SYMBOL = "?";
 
+    // 合并address和defaults 构建新的url
+    // 1.通过address和defaults中的参数来构建url，如果address有包含多个url(,分隔)，则以第一个url作为 真实url，
+    // 在url中添加backup参数（value为其他url）
+    // 2.如果在 address中 缺少 protocol、username、password、port、path，则从 defaults中获取
+    // 3.将protocol、username、password、port、path这几个参数从 default中移除
+    // 4.查询参数合并 address的查询参数(优先)和defaults中的参数
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;
         }
         String url;
+        // 如果address包含://或者 ？，则直接使用该address作为url
         if (address.contains("://") || address.contains(URL_PARAM_STARTING_SYMBOL)) {
             url = address;
         } else {
+            //如果address 没有包含 :// 或者 ？，则使用 , 来分隔 address为数组
             String[] addresses = Constants.COMMA_SPLIT_PATTERN.split(address);
             url = addresses[0];
             if (addresses.length > 1) {
@@ -60,19 +68,26 @@ public class UrlUtils {
                     }
                     backup.append(addresses[i]);
                 }
+                // addresses[0]?backup=addresses[1],addresses[2]...
                 url += URL_PARAM_STARTING_SYMBOL + Constants.BACKUP_KEY + "=" + backup.toString();
             }
         }
         String defaultProtocol = defaults == null ? null : defaults.get(Constants.PROTOCOL_KEY);
         if (defaultProtocol == null || defaultProtocol.length() == 0) {
+            //默认使用dubbbo协议
             defaultProtocol = Constants.DUBBO_PROTOCOL;
         }
+        // 用户名
         String defaultUsername = defaults == null ? null : defaults.get(Constants.USERNAME_KEY);
+        // 密码
         String defaultPassword = defaults == null ? null : defaults.get(Constants.PASSWORD_KEY);
+        // 端口
         int defaultPort = StringUtils.parseInteger(defaults == null ? null : defaults.get(Constants.PORT_KEY));
+        // path
         String defaultPath = defaults == null ? null : defaults.get(Constants.PATH_KEY);
         Map<String, String> defaultParameters = defaults == null ? null : new HashMap<String, String>(defaults);
         if (defaultParameters != null) {
+            // 从defaultParameters中 去除 protocol、username、password、host、port、path 参数
             defaultParameters.remove(Constants.PROTOCOL_KEY);
             defaultParameters.remove(Constants.USERNAME_KEY);
             defaultParameters.remove(Constants.PASSWORD_KEY);
@@ -88,6 +103,7 @@ public class UrlUtils {
         String host = u.getHost();
         int port = u.getPort();
         String path = u.getPath();
+        // url参数
         Map<String, String> parameters = new HashMap<String, String>(u.getParameters());
         if ((protocol == null || protocol.length() == 0) && defaultProtocol != null && defaultProtocol.length() > 0) {
             changed = true;
@@ -111,6 +127,7 @@ public class UrlUtils {
                 port = defaultPort;
             } else {
                 changed = true;
+                //端口默认 9090
                 port = 9090;
             }
         }
@@ -369,6 +386,12 @@ public class UrlUtils {
         }
     }
 
+    /**
+     * consumerUrl 和 providerUrl中的接口名称是否 一致，或者有一个为 *
+     * @param consumerUrl
+     * @param providerUrl
+     * @return
+     */
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();

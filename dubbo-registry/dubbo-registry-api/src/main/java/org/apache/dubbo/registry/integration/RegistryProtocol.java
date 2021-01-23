@@ -103,13 +103,14 @@ public class RegistryProtocol implements Protocol {
 
     private final static Logger logger = LoggerFactory.getLogger(RegistryProtocol.class);
     private static RegistryProtocol INSTANCE;
-    //配置更新监听器
+    //配置中心更新监听器 Map<provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？category=configurators&check=false ServiceConfig组装出来的其他查询参数，Invoker>
     private final Map<URL, NotifyListener> overrideListeners = new ConcurrentHashMap<>();
+    //Map<{group}/{interfaceName}:{version},服务级别url监听器>
     private final Map<String, ServiceConfigurationListener> serviceConfigurationListeners = new ConcurrentHashMap<>();
     private final ProviderConfigurationListener providerConfigurationListener = new ProviderConfigurationListener();
     //To solve the problem of RMI repeated exposure port conflicts, the services that have been exposed are no longer exposed.
     //providerurl <--> exporter
-    //Map<服务提供者url的string形式，并且去除dynamic参数,exporter>
+    //Map<服务提供者url的string形式( {暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数)，并且去除dynamic、enabled参数,ExporterChangeableWrapper>
     private final ConcurrentMap<String, ExporterChangeableWrapper<?>> bounds = new ConcurrentHashMap<>();
     private Cluster cluster;
     private Protocol protocol;
@@ -164,6 +165,11 @@ public class RegistryProtocol implements Protocol {
         return overrideListeners;
     }
 
+    /**
+     *
+     * @param registryUrl 注册中心url
+     * @param registeredProviderUrl 已经简化过的提供者url(原始：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数)
+     */
     public void register(URL registryUrl, URL registeredProviderUrl) {
         Registry registry = registryFactory.getRegistry(registryUrl);
         registry.register(registeredProviderUrl);
@@ -183,33 +189,36 @@ public class RegistryProtocol implements Protocol {
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
         // 获得注册中心的url，以 zookeeper 注册中心为例，得到的示例 URL 如下：
+        //{真实的注册中心协议}://注册中心ip+端口/org.apache.dubbo.registry.RegistryService?registry={注册中心协议(如果从注册中心地址获取不到协议，默认dubbo)}&export={服务url的toString(其中包括serviceConfig组装出来的各种参数)}&proxy={服务url中的代理参数}和applicationConfig、RegistryConfig中获取的其他查询参数 服务url：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
         // zookeeper://127.0.0.1:2181/com.alibaba.dubbo.registry.RegistryService?application=demo-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F172.17.48.52%3A20880%2Fcom.alibaba.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddemo-provider
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
-        //获得已经注册的服务提供者url
+        // 从export参数中获取 真实服务url
+        // {暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
         // dubbo://172.17.48.52:20880/com.alibaba.dubbo.demo.DemoService?anyhost=true&application=demo-provider&dubbo=2.0.2&generic=false&interface=com.alibaba.dubbo.demo.DemoService&methods=sayHello
         URL providerUrl = getProviderUrl(originInvoker);
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
-        // 获取override 配置订阅 URL
+        // 获取外部配置中心override 配置订阅 URL
+        // 设置会设置到注册中心的url：provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)?category=configurators&check=false ServiceConfig组装出来的其他查询参数
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
-        // 创建override的监听器
+        // 创建配置中心url的监听器
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
         // 把监听器添加到集合
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
-        // 根据外部配置覆盖后的提供者url，根据override的配置来覆盖原来的url，
+        // 根据外部配置中配置的服务url来覆盖提供者url
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
         //export invoker
         // 服务暴露
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
-        // 根据 URL 加载 Registry 实现类，比如ZookeeperRegistry
+        // 根据 URL 加载 注册中心 实现类，比如ZookeeperRegistry
         final Registry registry = getRegistry(originInvoker);
-        // 返回注册到注册表的url并过滤url参数一次
+        // 根据参数 选择出 需要注册到 注册中心的参数列表 并返回url
         final URL registeredProviderUrl = getRegisteredProviderUrl(providerUrl, registryUrl);
         // 生成ProviderInvokerWrapper，它会保存服务提供方和消费方的调用地址和代理对象
         ProviderInvokerWrapper<T> providerInvokerWrapper = ProviderConsumerRegTable.registerProvider(originInvoker,
@@ -228,6 +237,7 @@ public class RegistryProtocol implements Protocol {
 
         // Deprecated! Subscribe to override rules in 2.6.x or before.
         // 向注册中心进行订阅 override 数据
+        //provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)?category=configurators&check=false ServiceConfig组装出来的其他查询参数
         registry.subscribe(overrideSubscribeUrl, overrideSubscribeListener);
 
         // 设置注册中心url
@@ -240,7 +250,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     private URL overrideUrlWithConfig(URL providerUrl, OverrideListener listener) {
+        //应用级别的 服务治理规则 来 覆盖服务提供者url
         providerUrl = providerConfigurationListener.overrideUrl(providerUrl);
+        //服务级别的 服务治理规则 来 覆盖服务提供者url
         ServiceConfigurationListener serviceConfigurationListener = new ServiceConfigurationListener(providerUrl, listener);
         serviceConfigurationListeners.put(providerUrl.getServiceKey(), serviceConfigurationListener);
         return serviceConfigurationListener.overrideUrl(providerUrl);
@@ -249,7 +261,7 @@ public class RegistryProtocol implements Protocol {
     //在这里根据不同的协议配置，调用不同的protocol实现。跟暴露到本地的时候实现InjvmProtocol一样
     @SuppressWarnings("unchecked")
     private <T> ExporterChangeableWrapper<T> doLocalExport(final Invoker<T> originInvoker, URL providerUrl) {
-        //服务提供者url的string形式，并且去除dynamic参数
+        //服务提供者url的string形式，并且去除dynamic、enabled参数
         String key = getCacheKey(originInvoker);
 
         // 加入缓存
@@ -313,6 +325,7 @@ public class RegistryProtocol implements Protocol {
         return registryFactory.getRegistry(registryUrl);
     }
 
+    //从invoker中获取 注册中心url(把registry协议替换为真实注册中心的协议)
     private URL getRegistryUrl(Invoker<?> originInvoker) {
         URL registryUrl = originInvoker.getUrl();
         if (REGISTRY_PROTOCOL.equals(registryUrl.getProtocol())) {
@@ -329,6 +342,11 @@ public class RegistryProtocol implements Protocol {
      * @param providerUrl
      * @return url to registry.
      */
+    //由于 新版本的dubbo将一些key放在了元数据中心，如果判断到注册中心url中simplified 这个属性没有显示设置为false，则从 提供者url中去除
+    // monitor、bind.ip、bind.port、qos.enable、 qos.port、qos.accept.foreign.ip、validation、interfaces这些参数和其他以hidden.开头的key
+    //否则只保留 在extra-keys中指定的 和 {APPLICATION_KEY, CODEC_KEY, EXCHANGER_KEY, SERIALIZATION_KEY, CLUSTER_KEY, CONNECTIONS_KEY, DEPRECATED_KEY,
+    //            GROUP_KEY, LOADBALANCE_KEY, MOCK_KEY, PATH_KEY, TIMEOUT_KEY, TOKEN_KEY, VERSION_KEY, WARMUP_KEY, WEIGHT_KEY, TIMESTAMP_KEY, DUBBO_VERSION_KEY, RELEASE_KEY}
+    // 这些key
     private URL getRegisteredProviderUrl(final URL providerUrl, final URL registryUrl) {
         //The address you see at the registry
         if (!registryUrl.getParameter(SIMPLIFIED_KEY, false)) {
@@ -354,6 +372,7 @@ public class RegistryProtocol implements Protocol {
     }
 
     //设置配置中心url，协议为provider,category为configurators
+    // provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？category=configurators&check=false ServiceConfig组装出来的其他查询参数
     private URL getSubscribedOverrideUrl(URL registeredProviderUrl) {
         return registeredProviderUrl.setProtocol(PROVIDER_PROTOCOL)
                 .addParameters(CATEGORY_KEY, CONFIGURATORS_CATEGORY, CHECK_KEY, String.valueOf(false));
@@ -365,6 +384,7 @@ public class RegistryProtocol implements Protocol {
      * @param originInvoker
      * @return
      */
+    // 从export参数中获取 真实服务url
     private URL getProviderUrl(final Invoker<?> originInvoker) {
         String export = originInvoker.getUrl().getParameterAndDecoded(EXPORT_KEY);
         if (export == null || export.length() == 0) {
@@ -551,7 +571,11 @@ public class RegistryProtocol implements Protocol {
      */
     //配置监听器
     private class OverrideListener implements NotifyListener {
+        //配置中心注册的url：
+        //服务端：provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？category=configurators&check=false ServiceConfig组装出来的其他查询参数
+        //客户端：
         private final URL subscribeUrl;
+        // invoker
         private final Invoker originInvoker;
 
 
@@ -635,12 +659,14 @@ public class RegistryProtocol implements Protocol {
     }
 
     private class ServiceConfigurationListener extends AbstractConfiguratorListener {
+        //服务提供者url：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
         private URL providerUrl;
         private OverrideListener notifyListener;
 
         public ServiceConfigurationListener(URL providerUrl, OverrideListener notifyListener) {
             this.providerUrl = providerUrl;
             this.notifyListener = notifyListener;
+            // key: {group}*{interfaceName}:{version}.configurators
             this.initWith(providerUrl.getEncodedServiceKey() + CONFIGURATORS_SUFFIX);
         }
 
@@ -657,6 +683,7 @@ public class RegistryProtocol implements Protocol {
     private class ProviderConfigurationListener extends AbstractConfiguratorListener {
 
         public ProviderConfigurationListener() {
+            // key: {应用名}.configurators
             this.initWith(ApplicationModel.getApplication() + CONFIGURATORS_SUFFIX);
         }
 
@@ -689,7 +716,9 @@ public class RegistryProtocol implements Protocol {
 
         private final Invoker<T> originInvoker;
         private Exporter<T> exporter;
+        //监听的注册中心url(provider://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)?category=configurators&check=false ServiceConfig组装出来的其他查询参数)
         private URL subscribeUrl;
+        //已经简化过的提供者url（原始：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数）
         private URL registerUrl;
         //此处的exporter已经是 协议导出的了，比如dubbo协议、http协议
         public ExporterChangeableWrapper(Exporter<T> exporter, Invoker<T> originInvoker) {

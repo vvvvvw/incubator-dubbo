@@ -240,7 +240,7 @@ public class ClassHelper {
                 && isPrimitive(method.getParameterTypes()[0]);
     }
 
-    //是否get方法，而且返回值为原生/包装/Object类型
+    //是否get方法，而且返回值是 原生类型或者包装类型或者Object类型或者String类型
     public static boolean isGetter(Method method) {
         String name = method.getName();
         return (name.startsWith("get") || name.startsWith("is"))
@@ -251,7 +251,7 @@ public class ClassHelper {
                 && isPrimitive(method.getReturnType());
     }
 
-    //是否是 原生类型或者包装类型或者Object类型
+    //是否是 原生类型或者包装类型或者Object类型或者String类型
     public static boolean isPrimitive(Class<?> type) {
         return type.isPrimitive()
                 || type == String.class
@@ -266,6 +266,7 @@ public class ClassHelper {
                 || type == Object.class;
     }
 
+    //将 value 转换为 type类型
     public static Object convertPrimitive(Class<?> type, String value) {
         if (value == null) {
             return null;

@@ -33,6 +33,7 @@ public class InvokerWrapper<T> implements Invoker<T> {
      */
     private final Invoker<T> invoker;
 
+    //服务端：{暴露协议的扩展名}://{需要注册到注册中心的ip地址}:{需要注册到注册中心的端口}/[协议的contextPath/]path(默认是接口权限定类名)？ServiceConfig组装出来的其他查询参数
     private final URL url;
 
     public InvokerWrapper(Invoker<T> invoker, URL url) {

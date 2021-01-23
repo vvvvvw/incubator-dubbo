@@ -22,6 +22,7 @@ import java.util.Map;
 /**
  * In-memory configuration
  */
+// 内存配置，其实就是一个map
 public class InmemoryConfiguration extends AbstractPrefixConfiguration {
 
     // stores the configuration key-value pairs

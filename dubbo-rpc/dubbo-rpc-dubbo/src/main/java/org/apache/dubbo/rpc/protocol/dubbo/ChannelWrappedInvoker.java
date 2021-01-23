@@ -43,6 +43,13 @@ class ChannelWrappedInvoker<T> extends AbstractInvoker<T> {
     private final String serviceKey;
     private final ExchangeClient currentClient;
 
+    /**
+     *
+     * @param serviceType 回调接口的类型
+     * @param channel
+     * @param url
+     * @param serviceKey
+     */
     ChannelWrappedInvoker(Class<T> serviceType, Channel channel, URL url, String serviceKey) {
         super(serviceType, url, new String[]{Constants.GROUP_KEY, Constants.TOKEN_KEY, Constants.TIMEOUT_KEY});
         this.channel = channel;
@@ -54,6 +61,7 @@ class ChannelWrappedInvoker<T> extends AbstractInvoker<T> {
     protected Result doInvoke(Invocation invocation) throws Throwable {
         RpcInvocation inv = (RpcInvocation) invocation;
         // use interface's name as service path to export if it's not found on client side
+        //
         inv.setAttachment(Constants.PATH_KEY, getInterface().getName());
         inv.setAttachment(Constants.CALLBACK_SERVICE_KEY, serviceKey);
 

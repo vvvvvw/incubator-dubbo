@@ -50,6 +50,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     private final static String DEFAULT_ROOT = "dubbo";
 
+    /**
+     * 根节点的名字(/组名)(默认为/dubbo)
+     */
     private final String root;
 
     private final Set<String> anyServices = new ConcurrentHashSet<>();
@@ -60,7 +63,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     public ZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url);
-        // 获得所有url地址
+        // 注册中心url如果没有指定地址，则直接报错
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }

@@ -126,6 +126,7 @@ public final class ReflectUtils {
     private ReflectUtils() {
     }
 
+    //是否 cls是 原生类型或者 包装类 或者 string 或者Date类型
     public static boolean isPrimitives(Class<?> cls) {
         if (cls.isArray()) {
             return isPrimitive(cls.getComponentType());
@@ -951,6 +952,14 @@ public final class ReflectUtils {
         return getEmptyObject(returnType, new HashMap<Class<?>, Object>(), 0);
     }
 
+    //获取空对象(不是null)
+
+    /**
+     * @param returnType
+     * @param emptyInstances
+     * @param level 层数，如果 当前解析层数大于2层的话，则不向下解析了(2层以内的field 也会被赋值对应的空对象)
+     * @return
+     */
     private static Object getEmptyObject(Class<?> returnType, Map<Class<?>, Object> emptyInstances, int level) {
         if (level > 2) {
             return null;
@@ -1020,7 +1029,7 @@ public final class ReflectUtils {
     }
 
     /**
-     * 是否是set方法
+     * 是否是get方法（public、非static、返回值不是void、不是object类声明的方法、参数列表为空、get或者is开头且方法名不只是get或者is）
      * @param method
      * @return
      */
@@ -1036,7 +1045,7 @@ public final class ReflectUtils {
     }
 
     /**
-     * 根据set方法获取属性名
+     * 根据get方法获取属性名(get或者is之后且首字母小写)
      * @param method
      * @return
      */
@@ -1073,7 +1082,7 @@ public final class ReflectUtils {
     }
 
     /**
-     * 是否该field是 publish，非static、非final、非合成的类
+     * 是否该field是 public，非static、非final、非合成的字段
      * @param field
      * @return
      */

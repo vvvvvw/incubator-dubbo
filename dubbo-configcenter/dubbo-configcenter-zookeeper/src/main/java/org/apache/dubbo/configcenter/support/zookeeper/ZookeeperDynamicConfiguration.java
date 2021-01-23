@@ -41,16 +41,21 @@ public class ZookeeperDynamicConfiguration implements DynamicConfiguration {
 
     private Executor executor;
     // The final root path would be: /configRootPath/"config"
+    // 根路径为 /{config.namespace}/config，namespace参数(默认为 dubbo)
     private String rootPath;
     private final ZookeeperClient zkClient;
+    // zk客户端初始化 栅栏，只有在接收到 初始化成功的消息时 才继续执行构造方法
     private CountDownLatch initializedLatch;
 
     private CacheListener cacheListener;
+    // 通过configCenterConfig来构建，(protocol+address+ path(ConfigCenterConfig))由 <config-center />标签的protocol和address参数来指定
+    // 其他参数为 ConfigCenterConfig的相关属性
     private URL url;
 
 
     ZookeeperDynamicConfiguration(URL url, ZookeeperTransporter zookeeperTransporter) {
         this.url = url;
+        // 获取configcenter的config.namespace参数(默认为 dubbo)，根路径为 /{config.namespace}/config
         rootPath = "/" + url.getParameter(CONFIG_NAMESPACE_KEY, DEFAULT_GROUP) + "/config";
 
         initializedLatch = new CountDownLatch(1);
@@ -89,6 +94,7 @@ public class ZookeeperDynamicConfiguration implements DynamicConfiguration {
         cacheListener.removeListener(key, listener);
     }
 
+    // 获取 外部配置值，/{config.namespace}/config/{group]/{key}，并将最后一个.替换为 /(原因：key一般都是 {接口名}.{规则名},正好使用/把接口名和规则名分隔开)
     @Override
     public String getConfig(String key, String group, long timeout) throws IllegalStateException {
         /**

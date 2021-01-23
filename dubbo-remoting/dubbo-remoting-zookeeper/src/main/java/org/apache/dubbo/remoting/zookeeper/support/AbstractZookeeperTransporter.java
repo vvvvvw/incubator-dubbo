@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class AbstractZookeeperTransporter implements ZookeeperTransporter {
     private static final Logger logger = LoggerFactory.getLogger(ZookeeperTransporter.class);
+    // 已经创建的zk客户端缓存 Map<zk地址，zk客户端>
     private final Map<String, ZookeeperClient> zookeeperClientMap = new ConcurrentHashMap<>();
 
     /**

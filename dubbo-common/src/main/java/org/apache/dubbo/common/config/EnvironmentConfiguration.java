@@ -19,6 +19,7 @@ package org.apache.dubbo.common.config;
 /**
  * Configuration from system environment
  */
+//从环境变量中 获取属性值
 public class EnvironmentConfiguration extends AbstractPrefixConfiguration {
 
     public EnvironmentConfiguration(String prefix, String id) {

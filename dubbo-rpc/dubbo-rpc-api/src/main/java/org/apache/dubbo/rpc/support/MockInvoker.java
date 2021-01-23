@@ -92,10 +92,11 @@ final public class MockInvoker<T> implements Invoker<T> {
             // 是列表类型
             value = JSON.parseObject(mock, List.class);
         } else {
+            // string
             value = mock;
         }
         if (ArrayUtils.isNotEmpty(returnTypes)) {
-            //数组类型
+            //解析value
             value = PojoUtils.realize(value, (Class<?>) returnTypes[0], returnTypes.length > 1 ? returnTypes[1] : null);
         }
         return value;
@@ -305,4 +306,5 @@ final public class MockInvoker<T> implements Invoker<T> {
         //FIXME
         return null;
     }
+
 }

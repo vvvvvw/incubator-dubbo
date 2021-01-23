@@ -122,7 +122,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * Rule one: for a certain provider <ip:port,timeout=100>
      * Rule two: for all providers <* ,timeout=5000>
      */
-    /** 配置规则数组 **/
+    /** 服务治理配置类 **/
     private volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     /** url与服务提供者 Invoker 集合的映射缓存 **/
@@ -815,6 +815,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         ReferenceConfigurationListener(RegistryDirectory directory, URL url) {
             this.directory = directory;
             this.url = url;
+            //key: {group}*{interfaceName}:{version}.configurators
             this.initWith(url.getEncodedServiceKey() + Constants.CONFIGURATORS_SUFFIX);
         }
 
@@ -829,6 +830,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         List<RegistryDirectory> listeners = new ArrayList<>();
 
         ConsumerConfigurationListener() {
+            // key: {应用名}.configurators
             this.initWith(ApplicationModel.getApplication() + Constants.CONFIGURATORS_SUFFIX);
         }
 

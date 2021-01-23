@@ -37,6 +37,7 @@ public class MethodConfig extends AbstractMethodConfig {
     /**
      * The method name
      */
+    //方法名
     private String name;
 
     /**
@@ -112,7 +113,9 @@ public class MethodConfig extends AbstractMethodConfig {
     /**
      * These properties come from MethodConfig's parent Config module, they will neither be collected directly from xml or API nor be delivered to url
      */
+    // 方法对应的服务接口名
     private String service;
+    // method配置对应的 serviceCOnfigBean 对应的 id属性
     private String serviceId;
 
     @Parameter(excluded = true)

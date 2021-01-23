@@ -44,6 +44,7 @@ public class ProtocolConfig extends AbstractConfig {
     /**
      * Protocol name
      */
+    //没有指定，默认为dubbo
     private String name;
 
     /**
@@ -59,6 +60,7 @@ public class ProtocolConfig extends AbstractConfig {
     /**
      * Context path
      */
+    //如果设置了，会添加在 path上
     private String contextpath;
 
     /**

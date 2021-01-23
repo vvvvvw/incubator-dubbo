@@ -119,6 +119,9 @@ public abstract class AbstractConfig implements Serializable {
      * The config id
      */
     protected String id;
+    //配置前缀，默认为dubbo.{配置类名}.属性 注意，这个prefix和namespace没有一毛钱的关系
+    //registryConfig：如果设置了id，那么在refresh的时候 前缀固定是 前缀为 dubbo.registries.
+    //protocolConfig:如果设置了id，那么在refresh的时候 前缀固定是 前缀为 dubbo.protocols.
     protected String prefix;
 
     private static String convertLegacyValue(String key, String value) {
@@ -132,6 +135,7 @@ public abstract class AbstractConfig implements Serializable {
         return value;
     }
 
+    //根据 配置类名获取标签名，去除后缀的"Config"和"Bean"，并将剩余字符从驼峰风格 转换为 - 分隔
     private static String getTagName(Class<?> cls) {
         String tag = cls.getSimpleName();
         for (String suffix : SUFFIXES) {
@@ -147,8 +151,10 @@ public abstract class AbstractConfig implements Serializable {
         appendParameters(parameters, config, null);
     }
 
-    //用于将对象字段信息添加到 map 中。实现上则是通过反射获取目标对象的 getter 方法，并调用该方法获取属性值。然后再通过 getter 方法名解析出属性名，比如从方法名 getName 中可解析出属性 name。如果用户传入了属性名前缀，此时需要将属性名加入前缀内容。最后将 <属性名，属性值> 键值对存入到 map 中就行了
+    //用于将对象字段信息添加到 map 中。实现上则是通过反射获取目标对象的 getter 方法，并调用该方法获取属性值。然后再通过 getter 方法名解析出属性名，比如从方法名 getName 中可解析出属性 name。
+    //如果用户传入了属性名前缀，此时需要将属性名加入前缀内容。最后将 <属性名，属性值> 键值对存入到 map 中就行了
     //提取config中标注了 Parameter注解的方法，并获取属性值到 parameters上，属性名以 prefix开头
+    // 注意：appendParameters 会将 所有get方法获取到的属性 都设置在 parameters中(除非返回值为 空字符串)
     @SuppressWarnings("unchecked")
     protected static void appendParameters(Map<String, String> parameters, Object config, String prefix) {
         if (config == null) {
@@ -158,11 +164,14 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 String name = method.getName();
+                ////是否get方法，而且返回值是 原生类型或者包装类型或者Object类型或者String类型
                 if (ClassHelper.isGetter(method)) {
                     Parameter parameter = method.getAnnotation(Parameter.class);
+                    //如果返回值 是 Object类型或者 跳过，则跳过
                     if (method.getReturnType() == Object.class || parameter != null && parameter.excluded()) {
                         continue;
                     }
+                    //到了这一步，属性值是 原生类型或者包装类型或者String类型
                     String key;
                     if (parameter != null && parameter.key().length() > 0) {
                         key = parameter.key();
@@ -178,12 +187,12 @@ public abstract class AbstractConfig implements Serializable {
                             str = URL.encode(str);
                         }
                         if (parameter != null && parameter.append()) {
-                            //提取 default.key 的属性值
+                            //提取 default.key 的属性值 append到 新的value上(，分隔)
                             String pre = parameters.get(Constants.DEFAULT_KEY + "." + key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
-                            //提取 key 的属性值
+                            //提取 key 的属性值 append到 新的value上(,分隔)
                             pre = parameters.get(key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
@@ -197,7 +206,7 @@ public abstract class AbstractConfig implements Serializable {
                     } else if (parameter != null && parameter.required()) {
                         throw new IllegalStateException(config.getClass().getSimpleName() + "." + key + " == null");
                     }
-                    //如果是 getParameters 方法，提取返回值并设置到 pre.key上
+                    //如果是 getParameters 方法，提取返回值并设置到 pre.key上（并将返回的map的key中的 - 统一替换为 .）
                 } else if ("getParameters".equals(name)
                         && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 0
@@ -229,6 +238,7 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 Parameter parameter = method.getAnnotation(Parameter.class);
+                //如果没有@Parameter注解，或者 attribute属性为false，跳过
                 if (parameter == null || !parameter.attribute()) {
                     continue;
                 }
@@ -254,6 +264,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    //构造回调信息
     protected static ConsumerMethodModel.AsyncMethodInfo convertMethodConfig2AyncInfo(MethodConfig methodConfig) {
         if (methodConfig == null || (methodConfig.getOninvoke() == null && methodConfig.getOnreturn() == null && methodConfig.getOnthrow() == null)) {
             return null;
@@ -392,6 +403,7 @@ public abstract class AbstractConfig implements Serializable {
         }
     }
 
+    //获取 properties中 key前缀为 prefix的 条目并收集 子字符串（从 prefix+1-> 第一个.为止）
     protected static Set<String> getSubProperties(Map<String, String> properties, String prefix) {
         return properties.keySet().stream().filter(k -> k.contains(prefix)).map(k -> {
             k = k.substring(prefix.length());
@@ -399,6 +411,7 @@ public abstract class AbstractConfig implements Serializable {
         }).collect(Collectors.toSet());
     }
 
+    // 获取属性名(如果有 @Parameter注解，且useKeyAsProperty为true，则使用 @Parameter的key；否则直接使用通过 set方法提取出来的key )
     private static String extractPropertyName(Class<?> clazz, Method setter) throws Exception {
         String propertyName = setter.getName().substring("set".length());
         Method getter = null;
@@ -490,13 +503,17 @@ public abstract class AbstractConfig implements Serializable {
      * <p>
      * Notice! This method should include all properties in the returning map, treat @Parameter differently compared to appendParameters.
      */
+    // 遍历 配置类的所有返回值为 原生类型或者包装类型或者String类型 的get方法
+    // 将 key(属性名或者其上@Parameter注解的key) 和返回值 作为map返回
     public Map<String, String> getMetaData() {
         Map<String, String> metaData = new HashMap<>();
         Method[] methods = this.getClass().getMethods();
         for (Method method : methods) {
             try {
                 String name = method.getName();
+                //判断是否是 元数据方法（就是get方法，且返回值是 原生类型或者包装类型或者Object类型或者String类型）
                 if (isMetaMethod(method)) {
+                    //通过get方法 获取属性名
                     String prop = calculateAttributeFromGetter(name);
                     String key;
                     Parameter parameter = method.getAnnotation(Parameter.class);
@@ -507,6 +524,7 @@ public abstract class AbstractConfig implements Serializable {
                     }
                     // treat url and configuration differently, the value should always present in configuration though it may not need to present in url.
                     //if (method.getReturnType() == Object.class || parameter != null && parameter.excluded()) {
+                    //如果返回值是 Object，则 跳过
                     if (method.getReturnType() == Object.class) {
                         metaData.put(key, null);
                         continue;
@@ -537,6 +555,7 @@ public abstract class AbstractConfig implements Serializable {
         return metaData;
     }
 
+    //获取配置前缀，默认为dubbbo.{标签名(根据 配置类名获取标签名，去除后缀的"Config"和"Bean"，并将剩余字符从驼峰风格 转换为 - 分隔)}
     @Parameter(excluded = true)
     public String getPrefix() {
         return StringUtils.isNotEmpty(prefix) ? prefix : (Constants.DUBBO + "." + getTagName(this.getClass()));
@@ -552,9 +571,17 @@ public abstract class AbstractConfig implements Serializable {
      */
     public void refresh() {
         try {
+            // 获取 多个混合配置（系统配置、应用级别的外部配置、全局级别的外部配置、配置文件）
+            //获取配置前缀，默认为dubbbo.{标签名(根据 配置类名获取标签名，去除后缀的"Config"和"Bean"，并将剩余字符从驼峰风格 转换为 - 分隔)}
+            // id就是 配置类实例在 spring中的beanname
             CompositeConfiguration compositeConfiguration = Environment.getInstance().getConfiguration(getPrefix(), getId());
             InmemoryConfiguration config = new InmemoryConfiguration(getPrefix(), getId());
+            // 遍历 配置类的所有返回值为 原生类型或者包装类型或者String类型 的get方法
+            // 将 key(属性名或者其上@Parameter注解的key) 和返回值 作为map返回
             config.addProperties(getMetaData());
+            // todo configCenterFirst 这个属性 其实是在 ConfigCenterConfig refresh的时候赋值的
+            // 因为 ConfigCenterConfig refresh的时候其实用不到 外部配置，因此 没有关系
+            // 之后 其他配置类 refresh的时候这个属性 已经 被设置好了
             if (Environment.getInstance().isConfigCenterFirst()) {
                 // The sequence would be: SystemConfiguration -> AppExternalConfiguration -> ExternalConfiguration -> AbstractConfig -> PropertiesConfiguration
                 compositeConfiguration.addConfiguration(3, config);
@@ -568,6 +595,8 @@ public abstract class AbstractConfig implements Serializable {
             for (Method method : methods) {
                 if (ClassHelper.isSetter(method)) {
                     try {
+                        //根据属性名 从 组合配置中 获取value，并设置到配置类中
+                        //属性名(如果有 @Parameter注解，且useKeyAsProperty为true，则使用 @Parameter的key；否则直接使用通过 set方法提取出来的key )
                         String value = StringUtils.trim(compositeConfiguration.getString(extractPropertyName(getClass(), method)));
                         // isTypeMatch() is called to avoid duplicate and incorrect update, for example, we have two 'setGeneric' methods in ReferenceConfig.
                         if (StringUtils.isNotEmpty(value) && ClassHelper.isTypeMatch(method.getParameterTypes()[0], value)) {
@@ -626,6 +655,7 @@ public abstract class AbstractConfig implements Serializable {
         return true;
     }
 
+    //判断是否是 元数据方法（就是get方法，且返回值是 原生类型或者包装类型或者Object类型或者String类型）
     private boolean isMetaMethod(Method method) {
         String name = method.getName();
         if (!(name.startsWith("get") || name.startsWith("is"))) {

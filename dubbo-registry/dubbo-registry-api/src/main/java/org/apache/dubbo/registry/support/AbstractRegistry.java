@@ -101,7 +101,7 @@ public abstract class AbstractRegistry implements Registry {
     // 跟properties的区别是第一数据来源不是文件，而是从注册中心中读取，第二个notified根据分类把同一类的值做了聚合。
     //Map<消费者的URL,Map<Category(roviders、configurators、routers 等)，被通知的服务端URL集合>>
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();
-    // 注册中心 URL
+    // 注册中心 URL（{真实的注册中心协议}://注册中心ip+端口/org.apache.dubbo.registry.RegistryService?interface={org.apache.dubbo.registry.RegistryService}&proxy={服务url中的代理参数}和applicationConfig、RegistryConfig中获取的其他查询参数 ）
     private URL registryUrl;
     // 本地磁盘缓存文件，缓存注册中心的数据
     //serviceKey(字母或者_开头)=用空格分隔的URL集合
@@ -114,7 +114,7 @@ public abstract class AbstractRegistry implements Registry {
         // Start file save timer
         // 从url中读取是否同步保存文件的配置，如果没有值默认用异步保存文件
         syncSaveFile = url.getParameter(Constants.REGISTRY_FILESAVE_SYNC_KEY, false);
-        // 获得file路径
+        // 获得file路径，默认{系统变量user.home}/.dubbo/dubbo-registry-{应用名}-{注册中心地址}.cache
         String filename = url.getParameter(Constants.FILE_KEY, System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(Constants.APPLICATION_KEY) + "-" + url.getAddress() + ".cache");
         File file = null;
         if (ConfigUtils.isNotEmpty(filename)) {

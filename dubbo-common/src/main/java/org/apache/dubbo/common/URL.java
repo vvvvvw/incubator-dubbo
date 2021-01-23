@@ -1301,6 +1301,7 @@ class URL implements Serializable {
      *
      * @return
      */
+    //{group}*{interfaceName}:{version}
     public String getEncodedServiceKey() {
         String serviceKey = this.getServiceKey();
         serviceKey = serviceKey.replaceFirst("/", "*");
@@ -1311,6 +1312,7 @@ class URL implements Serializable {
      * The format of return value is '{group}/{interfaceName}:{version}'
      * @return
      */
+    // {group}/{interfaceName}:{version}
     public String getServiceKey() {
         String inf = getServiceInterface();
         if (inf == null) {
@@ -1331,7 +1333,7 @@ class URL implements Serializable {
         return buildKey(inf, getParameter(Constants.GROUP_KEY), getParameter(Constants.VERSION_KEY));
     }
 
-    // path/group:version
+    // [group/]path[:version]
     public static String buildKey(String path, String group, String version) {
         StringBuilder buf = new StringBuilder();
         if (group != null && group.length() > 0) {
@@ -1357,6 +1359,7 @@ class URL implements Serializable {
         return getServiceInterface();
     }
 
+    // key:interface> path
     public String getServiceInterface() {
         return getParameter(Constants.INTERFACE_KEY, path);
     }

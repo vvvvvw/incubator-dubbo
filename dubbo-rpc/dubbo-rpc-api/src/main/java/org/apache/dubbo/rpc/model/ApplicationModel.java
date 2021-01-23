@@ -39,6 +39,7 @@ public class ApplicationModel {
     /**
      * full qualified class name -> provided service
      */
+    // Map<[group/][暴露协议扩展对应的contextPath/]path[:version],ProviderModel>  path:默认是 接口类的全限定类名
     private static final ConcurrentMap<String, ProviderModel> providedServices = new ConcurrentHashMap<>();
     /**
      * full qualified class name -> subscribe service

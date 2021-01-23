@@ -26,6 +26,7 @@ import java.lang.annotation.Target;
  * Parameter
  */
 /////提取config中标注了 Parameter注解的方法，并获取属性值到 parameters上，属性名以 prefix开头
+// (注意提取 Parameter时 不只是包含加了@Parameter注解的属性，而是只要是配置类的get方法对应的属性且get方法返回值不是空字符串的都会添加到 parameters中 )
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
@@ -34,7 +35,7 @@ public @interface Parameter {
     //参数对应的属性，如果为空，则使用get方法来提取
     String key() default "";
 
-    //是否必须(不能为空或者空字符串)
+    //是否必须(如果为true，添加了@Parameter注解的get方法返回值不能为null)
     boolean required() default false;
 
     //是否跳过本属性
@@ -43,10 +44,12 @@ public @interface Parameter {
     //是否需要进行url编码
     boolean escaped() default false;
 
-    //是否是属性
+    //是否是attribute(有其他的方法 可以只收集 attribute 属性和对应的value，
+    // 此时没有使用到required、excluded 、escaped、append、useKeyAsProperty这些属性)
     boolean attribute() default false;
 
-    //是否需要提取 key和default.key 的属性并设置到 prefix.key属性上
+    //是否需要从传入的parameters参数中提取原有的 key和default.key 的属性 并设置到 新的属性上去
+    //(如果调用的时候指定了 前缀，则新增的属性名为 {前缀}.{key}属性；否则属性名还是 {key})
     boolean append() default false;
 
     /**
@@ -64,7 +67,7 @@ public @interface Parameter {
      *
      * </pre>
      */
-    //是否使用key作为 属性名
+    //是否使用key作为 属性名，如果为false，则使用通过get或者set方法计算得到的字段名 作为属性名
     boolean useKeyAsProperty() default true;
 
 }

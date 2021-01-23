@@ -29,19 +29,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -58,12 +46,25 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * <p/>
  * Other type will be covert to a map which contains the attributes and value pair of object.
  */
+
+/**
+ *  PojoUtils，深度遍历对象，将复杂类型转换为 简单类型
+ *  简单类型如下：Primitive Type(原生类型、string，number(Integer,Long),Date)
+ *              Primitive Type数组
+ *              集合，例：list、map。set等等
+ *  其他复杂类型会被转换为 map(key为对象内部元素的属性，value为对象内部元素的值)
+ */
 public class PojoUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(PojoUtils.class);
     private static final ConcurrentMap<String, Method> NAME_METHODS_CACHE = new ConcurrentHashMap<String, Method>();
     private static final ConcurrentMap<Class<?>, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<Class<?>, ConcurrentMap<String, Field>>();
 
+    /**
+     * 将Object[] objs 转换为 pojo[]
+     * @param objs
+     * @return
+     */
     public static Object[] generalize(Object[] objs) {
         Object[] dests = new Object[objs.length];
         for (int i = 0; i < objs.length; i++) {
@@ -92,6 +93,16 @@ public class PojoUtils {
      * @param gtypes
      * @return
      */
+    /**
+     * 实现原理如下：在JAVA的世界中，pojo通常用map来表示，
+     *             也就是一个Map可以用来表示一个对象的值，那从一个Map如果序列化一个对象呢？
+     *             其关键的要素是要在Map中保留该对象的类路径名，
+     *             也就是通过class来标识该Map需要反序列化的pojo类型。
+     * @param objs
+     * @param types
+     * @param gtypes
+     * @return
+     */
     public static Object[] realize(Object[] objs, Class<?>[] types, Type[] gtypes) {
         if (objs.length != types.length || objs.length != gtypes.length) {
             throw new IllegalArgumentException("args.length != types.length");
@@ -107,12 +118,24 @@ public class PojoUtils {
         return generalize(pojo, new IdentityHashMap<Object, Object>());
     }
 
+    // null => null
+    // Enum => Enum.name()
+    // Enum数组 => Enum.name()数组
+    // 原生类型、包装类型、String、Boolean、Character、Number、Date 或 其数组 => 原样返回
+    // Class => Class的全限定类名
+    // 数组 => 数组(元素是序列化之后的)
+    // list => ArrayList<序列化之后的元素>
+    // 集合但不是 list=> HashSet<序列化之后的元素>
+    // Map => 和之前一样的Map类型<序列化之后的key，序列化之后的value> Map(（如果是已知的HashMap/Hashtable/IdentityHashMap/LinkedHashMap/Properties/TreeMap/WeakHashMap/ConcurrentHashMap/ConcurrentSkipListMap，直接返回）；
+    // 否则如果 对应Map有复制构造函数(优先级高)和Map作为参数的构造函数，则使用构造函数创建，否则直接返回hashmap)
+    // Object => HashMap（元素： class:对象全限定类名  使用get方法提取： 属性名字: 序列化后的value 使用本对象声明的字段提取： 属性名字: 序列化之后的value）
+
     //如果是枚举或者枚举数组，返回 枚举的name或者name数组
     //原生或者包装类数组，返回 原来的对象
     //类对象或者类对象数组，返回类名或者类名数组
     //集合，返回list或者set，其中的每个对象还是调用generalize方法生成
     //map ，key调用generalize方法生成：value调用generalize方法生成
-    //对象， Map  // class:pojo类名  使用方法提取： 属性名字: generalize方法生成的value 使用public字段提取： 属性名字: generalize方法生成的value
+    //对象， Map  // class:pojo类名  使用方法提取： 属性名字: generalize方法生成的value 使用public字段(public，非static、非final、非合成)提取： 属性名字: generalize方法生成的value
     @SuppressWarnings("unchecked")
     private static Object generalize(Object pojo, Map<Object, Object> history) {
         if (pojo == null) {
@@ -149,6 +172,7 @@ public class PojoUtils {
         }
         history.put(pojo, pojo);
 
+        // pojo是数组 => 数组(元素是序列化之后的)
         if (pojo.getClass().isArray()) {
             int len = Array.getLength(pojo);
             Object[] dest = new Object[len];
@@ -159,6 +183,8 @@ public class PojoUtils {
             }
             return dest;
         }
+        //pojo 是list => ArrayList<序列化之后的元素>
+        //pojo 是集合但不是 list=> HashSet<序列化之后的元素>
         if (pojo instanceof Collection<?>) {
             Collection<Object> src = (Collection<Object>) pojo;
             int len = src.size();
@@ -169,17 +195,21 @@ public class PojoUtils {
             }
             return dest;
         }
+        // pojo是Map => Map<序列化之后的key，序列化之后的value>
         if (pojo instanceof Map<?, ?>) {
             Map<Object, Object> src = (Map<Object, Object>) pojo;
+            //创建一个空map
             Map<Object, Object> dest = createMap(src);
             history.put(pojo, dest);
             for (Map.Entry<Object, Object> obj : src.entrySet()) {
+                //将 key和value 序列化后 添加进去
                 dest.put(generalize(obj.getKey(), history), generalize(obj.getValue(), history));
             }
             return dest;
         }
         Map<String, Object> map = new HashMap<String, Object>();
         history.put(pojo, map);
+        //class:对象全限定类名
         map.put("class", pojo.getClass().getName());
         for (Method method : pojo.getClass().getMethods()) {
             if (ReflectUtils.isBeanPropertyReadMethod(method)) {
@@ -270,6 +300,8 @@ public class PojoUtils {
         return new ArrayList<Object>();
     }
 
+    //根据 src的类型 创建一个 空Map（如果是已知的HashMap/Hashtable/IdentityHashMap/LinkedHashMap/Properties/TreeMap/WeakHashMap/ConcurrentHashMap/ConcurrentSkipListMap，直接返回）；
+    // 否则如果 对应Map有复制构造函数(优先级高)和Map作为参数的构造函数，则使用构造函数创建，否则直接返回hashmap
     private static Map createMap(Map src) {
         Class<? extends Map> cl = src.getClass();
         Map result = null;
@@ -293,11 +325,13 @@ public class PojoUtils {
             result = new ConcurrentSkipListMap();
         } else {
             try {
+                //复制构造函数
                 result = cl.newInstance();
             } catch (Exception e) { /* ignore */ }
 
             if (result == null) {
                 try {
+                    //带Map的构造函数
                     Constructor<?> constructor = cl.getConstructor(Map.class);
                     result = (Map) constructor.newInstance(Collections.EMPTY_MAP);
                 } catch (Exception e) { /* ignore */ }
@@ -305,6 +339,7 @@ public class PojoUtils {
         }
 
         if (result == null) {
+            //直接返回HashMap
             result = new HashMap<Object, Object>();
         }
 
@@ -313,14 +348,18 @@ public class PojoUtils {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static Object realize0(Object pojo, Class<?> type, Type genericType, final Map<Object, Object> history) {
+        // null
         if (pojo == null) {
             return null;
         }
 
+        //enum
         if (type != null && type.isEnum() && pojo.getClass() == String.class) {
             return Enum.valueOf((Class<Enum>) type, (String) pojo);
         }
 
+        // 如果pojo是原生类型、包装类型、String、Boolean、Character、Number、Date 或 其数组
+        // 并且 type和pojo不是如下情况： （type 是枚举数组类型 并且 pojo是字符串数组类型）这种情况
         if (ReflectUtils.isPrimitives(pojo.getClass())
                 && !(type != null && type.isArray()
                 && type.getComponentType().isEnum()

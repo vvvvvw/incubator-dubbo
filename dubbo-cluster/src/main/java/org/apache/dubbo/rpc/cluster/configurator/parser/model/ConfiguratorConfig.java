@@ -19,7 +19,7 @@ package org.apache.dubbo.rpc.cluster.configurator.parser.model;
 import java.util.List;
 
 /**
- *
+ * 外部配置类对象
  */
 public class ConfiguratorConfig {
     public static final String SCOPE_SERVICE = "service";

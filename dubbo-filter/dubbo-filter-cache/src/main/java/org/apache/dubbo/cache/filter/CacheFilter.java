@@ -89,6 +89,7 @@ public class CacheFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {
+            //如果有cache参数
             Cache cache = cacheFactory.getCache(invoker.getUrl(), invocation);
             if (cache != null) {
                 String key = StringUtils.toArgumentString(invocation.getArguments());

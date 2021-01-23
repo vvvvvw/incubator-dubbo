@@ -53,6 +53,12 @@ public class GenericFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
         // 如果是泛化调用
+        /*
+        // 如果方法名为$invoker，并且只有3个参数，
+        // 并且服务端暴露的invoker不是GenericService的相关类
+        // 则认为本次服务调用时客户端泛化引用服务端，客户端的泛化调用，
+        // 需要将请求参数反序列化为该接口真实的pojo对象
+         */
         if (inv.getMethodName().equals(Constants.$INVOKE)
                 && inv.getArguments() != null
                 && inv.getArguments().length == 3

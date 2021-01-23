@@ -32,6 +32,7 @@ public class ConfigItem {
     private Boolean enabled;
     private List<String> addresses;
     private List<String> providerAddresses;
+    // List<ServiceKey的形式 ([group/]interfaceName:[version])>
     private List<String> services;
     private List<String> applications;
     private Map<String, String> parameters;

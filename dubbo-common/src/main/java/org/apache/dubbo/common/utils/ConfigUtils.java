@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 public class ConfigUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigUtils.class);
+    // 使用 ${} 作为占位符的 字符串
     private static Pattern VARIABLE_PATTERN = Pattern.compile(
             "\\$\\s*\\{?\\s*([\\._0-9a-zA-Z]+)\\s*\\}?");
     private static volatile Properties PROPERTIES;
@@ -120,6 +121,7 @@ public class ConfigUtils {
         return names;
     }
 
+    // 将expression中 ${} 占位符全部替换（优先级：系统变量>params>空字符串 ）
     public static String replaceProperty(String expression, Map<String, String> params) {
         if (expression == null || expression.length() == 0 || expression.indexOf('$') < 0) {
             return expression;
@@ -141,6 +143,7 @@ public class ConfigUtils {
         return sb.toString();
     }
 
+    //从配置文件中获取 属性值(配置文件名： 系统变量dubbo.properties.file、环境变量dubbo.properties.file、dubbo.properties)
     public static Properties getProperties() {
         if (PROPERTIES == null) {
             synchronized (ConfigUtils.class) {
@@ -173,6 +176,8 @@ public class ConfigUtils {
         return getProperty(key, null);
     }
 
+    // 获取配置值，优先级： 系统变量> properties文件（properties文件名： 系统变量dubbo.properties.file、环境变量dubbo.properties.file、dubbo.properties）
+    // 如果配置值中有 ${} 占位符，则 替换(优先级：系统变量>properties文件>空字符串)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static String getProperty(String key, String defaultValue) {
         String value = System.getProperty(key);
@@ -180,6 +185,7 @@ public class ConfigUtils {
             return value;
         }
         Properties properties = getProperties();
+        //// 将expression中 ${} 占位符全部替换（优先级：系统变量>params>空字符串 ）
         return replaceProperty(properties.getProperty(key, defaultValue), (Map) properties);
     }
 
@@ -189,6 +195,7 @@ public class ConfigUtils {
      * @param key key
      * @return value
      */
+    // 环境变量>系统变量
     public static String getSystemProperty(String key) {
         String value = System.getenv(key);
         if (StringUtils.isEmpty(value)) {

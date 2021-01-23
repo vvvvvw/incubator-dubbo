@@ -210,6 +210,7 @@ public class Constants {
 
     public static final String DEFAULT_KEY_PREFIX = "default.";
 
+    //default 前缀，给 ProviderConfig和ConsumerConfig中的属性 添加到 url 查询参数时 使用
     public static final String DEFAULT_KEY = "default";
 
     public static final String LOADBALANCE_KEY = "loadbalance";
@@ -222,7 +223,7 @@ public class Constants {
 
     public static final String CLUSTER_KEY = "cluster";
 
-    //服务端：使用哪种注册中心
+    //服务端：服务暴露时设置到 注册中心url中的参数：注册中心url的协议(在RegistryProtocol中会把registry协议替换为真实注册中心的协议)
     public static final String REGISTRY_KEY = "registry";
 
     public static final String METADATA_REPORT_KEY = "metadata";
@@ -230,7 +231,7 @@ public class Constants {
     //服务端:监视器url
     public static final String MONITOR_KEY = "monitor";
 
-    //客户端还是服务端 value:client consumer  server:producer
+    //客户端侧还是服务端侧 value:客户端 consumer  服务端:producer
     public static final String SIDE_KEY = "side";
 
     public static final String PROVIDER_SIDE = "provider";
@@ -248,6 +249,7 @@ public class Constants {
      */
     public static final String DEPRECATED_KEY = "deprecated";
 
+    // url参数 服务端：是否在环境变量或者系统变量中没有获取到 服务需要绑定的ip，从而是通过 获取本地ip地址 或者某一个网卡地址 来获取到的
     public static final String ANYHOST_KEY = "anyhost";
 
     public static final String ANYHOST_VALUE = "0.0.0.0";
@@ -277,7 +279,7 @@ public class Constants {
 
     public static final String ZOOKEEPER_PROTOCOL = "zookeeper";
 
-    //服务端:服务类代理的生成方式，注册中心代理的生成方式(todo 待确认，但是注册中心url中也有一个该参数，并且和服务类代理同值)
+    //服务端: (服务url：服务类代理的生成方式，注册中心代理的生成方式，注册url：服务类代理的生成方式，注册中心代理的生成方式)
     public static final String PROXY_KEY = "proxy";
 
     public static final String WEIGHT_KEY = "weight";
@@ -367,6 +369,7 @@ public class Constants {
     //调用 超时时间
     public static final String TIMEOUT_KEY = "timeout";
 
+    // 重试的key 字段值：重试次数
     public static final String RETRIES_KEY = "retries";
 
     public static final String FAIL_BACK_TASKS_KEY = "failbacktasks";
@@ -393,6 +396,7 @@ public class Constants {
 
     public static final String TRANSPORTER_KEY = "transporter";
 
+    //启动的服务器类型，默认为netty3
     public static final String SERVER_KEY = "server";
 
     public static final String CLIENT_KEY = "client";
@@ -447,8 +451,9 @@ public class Constants {
 
     public static final String CHECK_KEY = "check";
 
+    // 表示是否启用本registryConfig，加在 registryConfig的address参数值的后面作为查询参数 address?register=true/false
     public static final String REGISTER_KEY = "register";
-
+    // 表示是否启用本registryConfig，加在 registryConfig的address参数值的后面作为查询参数 address?subscribe=true/false
     public static final String SUBSCRIBE_KEY = "subscribe";
 
     //泳道
@@ -456,7 +461,8 @@ public class Constants {
 
     public static final String PATH_KEY = "path";
 
-    //服务接口名称
+    //服务接口名称 服务端： 对于服务url来说是接口全限定类名，对于注册中心url来说是RegistryService的全限定类名
+    //对于服务监听器url来说就是MonitorService的全限定类名
     public static final String INTERFACE_KEY = "interface";
 
     //需要代理的接口，逗号分隔
@@ -464,6 +470,7 @@ public class Constants {
 
     public static final String GENERIC_KEY = "generic";
 
+    //将注册中心的数据保存到本地文件的路径,默认（{系统变量user.home}/.dubbo/dubbo-registry-{应用名}-{注册中心地址}.cache）
     public static final String FILE_KEY = "file";
 
     public static final String DUMP_DIRECTORY = "dump.directory";
@@ -473,10 +480,10 @@ public class Constants {
     public static final String CLASSIFIER_KEY = "classifier";
 
     // TODO: 下面是服务发布的版本号，那这个呢？  by 15258 2019/6/4 7:51
-    //服务版本号
+    //服务端：配置的服务版本号
     public static final String VERSION_KEY = "version";
 
-    //服务发布的版本号 调用的服务版本号
+    //服务修订版本号 优先级:jar包MENIFEST.MF中的版本号>根据jar包文件名计算出来的版本号> version字段
     public static final String REVISION_KEY = "revision";
 
     public static final String DUBBO_VERSION_KEY = "dubbo";
@@ -495,6 +502,7 @@ public class Constants {
 
     public static final String COMMA_SEPARATOR = ",";
 
+    // 逗号分隔符
     public static final Pattern COMMA_SPLIT_PATTERN = Pattern
             .compile("\\s*[,]+\\s*");
 
@@ -619,6 +627,7 @@ public class Constants {
     /**
      * To decide whether register center saves file synchronously, the default value is asynchronously
      */
+    //是否将注册中心中的数据同步保存到文件中，如果没有值默认用异步保存文件
     public static final String REGISTRY_FILESAVE_SYNC_KEY = "save.file";
 
     /**
@@ -655,7 +664,7 @@ public class Constants {
     /**
      * The key name for export URL in register center
      */
-    //服务端: 注册中心url中设置的参数，value为服务类的url
+    //服务端: （注册中心url：value为服务类的url）
     public static final String EXPORT_KEY = "export";
 
     /**
@@ -690,11 +699,14 @@ public class Constants {
      */
     public static final String CHANNEL_CALLBACK_KEY = "channel.callback.invokers.key";
 
+    //服务端 所启动的服务器 关闭超时时间(默认10s)
     @Deprecated
     public static final String SHUTDOWN_WAIT_SECONDS_KEY = "dubbo.service.shutdown.wait.seconds";
 
+    //服务端 所启动的服务器 关闭超时时间(优先)(默认10s)
     public static final String SHUTDOWN_WAIT_KEY = "dubbo.service.shutdown.wait";
 
+    //导出时是否启动服务器(对于callbackservice和本地存根 导出，不启动服务器)
     public static final String IS_SERVER_KEY = "isserver";
 
     /**
@@ -737,10 +749,12 @@ public class Constants {
 
     public static final String DEFAULT_SCRIPT_TYPE_KEY = "javascript";
 
+    //对应服务是否 使用了本地存根
     public static final String STUB_EVENT_KEY = "dubbo.stub.event";
 
     public static final boolean DEFAULT_STUB_EVENT = false;
 
+    // 由代理类声明的所有方法，“，”分隔，本地存根使用
     public static final String STUB_EVENT_METHODS_KEY = "dubbo.stub.event.methods";
 
     /**
@@ -754,7 +768,7 @@ public class Constants {
     //是否会自动添加invocationid
     public static final String AUTO_ATTACH_INVOCATIONID_KEY = "invocationid.autoattach";
 
-    //服务暴露的范围 none：不暴露 local:本地 remote:远程
+    //服务端url配置： 服务暴露的范围 none：不暴露 local:本地 remote:远程
     public static final String SCOPE_KEY = "scope";
     //只导出到本地
     public static final String SCOPE_LOCAL = "local";
@@ -789,19 +803,24 @@ public class Constants {
 
     public static final String GENERIC_SERIALIZATION_BEAN = "bean";
 
+    // 服务端：通过这个key在配置中获取需要注册到 注册中心的本机ip(默认 服务绑定的本机ip)
     public static final String DUBBO_IP_TO_REGISTRY = "DUBBO_IP_TO_REGISTRY";
 
+    // 服务端：通过这个key在配置中获取需要注册到 注册中心的本机port(默认 服务绑定的本机port)
     public static final String DUBBO_PORT_TO_REGISTRY = "DUBBO_PORT_TO_REGISTRY";
 
+    // 服务端：通过这个key在配置中获取服务绑定的本机ip
     public static final String DUBBO_IP_TO_BIND = "DUBBO_IP_TO_BIND";
 
+    // 服务端：通过这个key在配置中获取服务绑定的本机port
     public static final String DUBBO_PORT_TO_BIND = "DUBBO_PORT_TO_BIND";
 
+    //url参数 服务端：服务绑定的本机ip
     public static final String BIND_IP_KEY = "bind.ip";
-
+    //url参数 服务端：服务绑定的本机port
     public static final String BIND_PORT_KEY = "bind.port";
 
-    // 客户端设置：设置消费者ip
+    // 客户端设置：设置消费者ip 服务端：监听器url中表示服务暴露的ip地址
     public static final String REGISTER_IP_KEY = "register.ip";
 
     public static final String QOS_ENABLE = "qos.enable";
@@ -824,12 +843,15 @@ public class Constants {
 
     public static final String FORCE_USE_TAG = "dubbo.force.tag";
 
+    // url中的主机名参数
     public static final String HOST_KEY = "host";
-
+    // url中的端口参数
     public static final String PORT_KEY = "port";
 
+    // url中的用户名参数
     public static final String USERNAME_KEY = "username";
 
+    // url中的密码参数
     public static final String PASSWORD_KEY = "password";
 
     public static final String ADDRESS_KEY = "address";

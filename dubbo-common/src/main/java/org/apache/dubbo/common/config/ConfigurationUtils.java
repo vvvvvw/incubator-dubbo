@@ -67,6 +67,7 @@ public class ConfigurationUtils {
         return StringUtils.trim(Environment.getInstance().getConfiguration().getString(property, defaultValue));
     }
 
+    // 将content 解析为 键值对
     public static Map<String, String> parseProperties(String content) throws IOException {
         Map<String, String> map = new HashMap<>();
         if (StringUtils.isEmpty(content)) {

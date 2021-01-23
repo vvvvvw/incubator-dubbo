@@ -109,7 +109,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        // 如果服务没有被暴露并且服务没有被取消暴露，则打印日志
+        // 如果服务没有被暴露并且服务没有被取消暴露，则打印日志并导出
         if (!isExported() && !isUnexported()) {
             if (logger.isInfoEnabled()) {
                 logger.info("The service ready on spring started. service: " + getInterface());
@@ -123,19 +123,21 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
         if (getProvider() == null) {
+            //如果 provider为空
+            //从spring中获取并设置默认的 ProviderConfig列表
             Map<String, ProviderConfig> providerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProviderConfig.class, false, false);
             if (providerConfigMap != null && providerConfigMap.size() > 0) {
                 Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
                 if (CollectionUtils.isEmptyMap(protocolConfigMap)
                         && providerConfigMap.size() > 1) { // backward compatibility
-                    List<ProviderConfig> providerConfigs = new ArrayList<ProviderConfig>();
+                    List<ProviderConfig> providerConfigs = new ArrayList<ProviderConfig>(); //收集默认的 ProviderConfig
                     for (ProviderConfig config : providerConfigMap.values()) {
                         if (config.isDefault() != null && config.isDefault()) {
                             providerConfigs.add(config);
                         }
                     }
                     if (!providerConfigs.isEmpty()) {
-                        setProviders(providerConfigs);
+                        setProviders(providerConfigs); //设置 providerConfigs
                     }
                 } else {
                     ProviderConfig providerConfig = null;
@@ -153,6 +155,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        //如果 application为空 或者 从对应的provider中获取不到对应的 application
+        //从spring中获取并设置默认的 ApplicationConfig列表
         if (getApplication() == null
                 && (getProvider() == null || getProvider().getApplication() == null)) {
             Map<String, ApplicationConfig> applicationConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ApplicationConfig.class, false, false);
@@ -169,6 +173,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        //如果 module为空 或者 从对应的provider中获取不到对应的 module
+        //从spring中获取并设置默认的 ModuleConfig列表
         if (getModule() == null
                 && (getProvider() == null || getProvider().getModule() == null)) {
             Map<String, ModuleConfig> moduleConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ModuleConfig.class, false, false);
@@ -188,6 +194,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 registryIds属性没有设置，从 applicationConfig和 provider中获取 registryIds属性
         if (StringUtils.isEmpty(getRegistryIds())) {
             if (getApplication() != null && StringUtils.isNotEmpty(getApplication().getRegistryIds())) {
                 setRegistryIds(getApplication().getRegistryIds());
@@ -197,6 +204,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 registries属性为空 并且也无法从 provider和application中获取到；并且也没有 registryIds属性
+        //从spring中 获取到所有 RegistryConfig 并设置到 registries属性
         if ((CollectionUtils.isEmpty(getRegistries()))
                 && (getProvider() == null || CollectionUtils.isEmpty(getProvider().getRegistries()))
                 && (getApplication() == null || CollectionUtils.isEmpty(getApplication().getRegistries()))) {
@@ -223,6 +232,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        //如果 metadata-report 属性没有配置，则从 spring中获取 MetadataReportConfig并设置
         if (getMetadataReportConfig() == null) {
             Map<String, MetadataReportConfig> metadataReportConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, MetadataReportConfig.class, false, false);
             if (metadataReportConfigMap != null && metadataReportConfigMap.size() == 1) {
@@ -232,6 +242,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 config-center 属性没有配置，则从 spring中获取 ConfigCenterConfig并设置
         if (getConfigCenter() == null) {
             Map<String, ConfigCenterConfig> configenterMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ConfigCenterConfig.class, false, false);
             if (configenterMap != null && configenterMap.size() == 1) {
@@ -241,6 +252,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 monitor属性没有设置，从 applicationConfig和 provider中获取
+        //否则 则从 spring中获取 MonitorConfig并设置
         if (getMonitor() == null
                 && (getProvider() == null || getProvider().getMonitor() == null)
                 && (getApplication() == null || getApplication().getMonitor() == null)) {
@@ -261,6 +274,8 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 metrics属性没有设置
+        //从 spring中获取 MonitorConfig并设置
         if (getMetrics() == null) {
             Map<String, MetricsConfig> metricsConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, MetricsConfig.class, false, false);
             if (metricsConfigMap != null && metricsConfigMap.size() > 0) {
@@ -283,6 +298,9 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
             }
         }
 
+        //如果 protocols属性为空 并且也无法从 provider中获取到；并且也没有 registryIds属性
+        //则 获取 protocolConfigIds 这个属性，如果还是没有，
+        //则从spring中 获取到所有 ProtocolConfig 并设置到 registries属性
         if (CollectionUtils.isEmpty(getProtocols())
                 && (getProvider() == null || CollectionUtils.isEmpty(getProvider().getProtocols()))) {
             Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
@@ -310,6 +328,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
                 }
             }
         }
+        // 设置path属性，优先级：手动设置的path属性> beanname(如果beanname是以 服务接口名为前缀的话)
         if (StringUtils.isEmpty(getPath())) {
             if (StringUtils.isNotEmpty(beanName)
                     && StringUtils.isNotEmpty(getInterface())

@@ -197,9 +197,15 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (StringUtils.isEmpty(interfaceName)) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
         }
+        // 用于检测 consumer、application 等核心配置类对象是否为空，
+        // 若为空，则尝试从其他配置类对象中获取相应的实例。
+        // Use default configs defined explicitly on global configs
+        //ConsumerConfig > ModuleConfig > ApplicationConfig，同时完善（application、module、registries、monitor）这些配置
         completeCompoundConfigs();
+        //如果有 外部配置，则开启
         startConfigCenter();
         // get consumer's global configuration
+        // 检测 consumer 是否为空，为空获取默认的consumer，如果默认的consumer也没有则新建一个默认的并设置到配置管理器中，并通过配置为其初始化
         checkDefault();
         this.refresh();
         if (getGeneric() == null && getConsumer() != null) {

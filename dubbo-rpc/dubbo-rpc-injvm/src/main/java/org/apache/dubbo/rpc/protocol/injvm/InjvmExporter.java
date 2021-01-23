@@ -29,6 +29,7 @@ class InjvmExporter<T> extends AbstractExporter<T> {
 
     private final String key;
 
+    //Map<{group}/{interfaceName}:{version},导出Invoker>
     private final Map<String, Exporter<?>> exporterMap;
 
     InjvmExporter(Invoker<T> invoker, String key, Map<String, Exporter<?>> exporterMap) {

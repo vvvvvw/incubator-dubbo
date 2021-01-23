@@ -54,9 +54,11 @@ public class ConfigCenterBean extends ConfigCenterConfig implements Initializing
         SpringExtensionFactory.addApplicationContext(applicationContext);
     }
 
+   //如果application属性没有设置，则获取spring容器中 default为null或者true的 applicationConfig实例并设置到 application属性上，为之后的 应用特定的外部化配置 做准备
     @Override
     public void afterPropertiesSet() throws Exception {
         if (getApplication() == null) {
+            // 如果没有指定 application 参数，则 从 spring容器中 获取所有 的 ApplicationConfig实例
             Map<String, ApplicationConfig> applicationConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ApplicationConfig.class, false, false);
             if (applicationConfigMap != null && applicationConfigMap.size() > 0) {
                 ApplicationConfig applicationConfig = null;
@@ -79,17 +81,23 @@ public class ConfigCenterBean extends ConfigCenterConfig implements Initializing
     public void destroy() throws Exception {
 
     }
-
+    //如果 includeSpringEnv属性为true，则从 environment获取 全部和应用特定 外部配置 并设置到 内存配置中
     @Override
     public void setEnvironment(Environment environment) {
         if (includeSpringEnv) {
+            // 从 environment中获取 key为 dubbo.properties(默认，可以自定义) 的value，
+            //1.如果value类型为map，则将map中所有元素都返回；2.如果value类型为string，则将string解析为键值对后返回；
             Map<String, String> externalProperties = getConfigurations(getConfigFile(), environment);
+            // 从 environment中获取 key对应 的value，key：
+            // appConfigFile字段值 > {appName字段值}.dubbo.properties（后缀dubbo.properties可以自定义） > application..dubbo.properties（后缀dubbo.properties可以自定义）
+            //1.如果value类型为map，则将map中所有元素都返回；2.如果value类型为string，则将string解析为键值对后返回；
             Map<String, String> appExternalProperties = getConfigurations(StringUtils.isNotEmpty(getAppConfigFile()) ? getAppConfigFile() : (StringUtils.isEmpty(getAppName()) ? ("application." + getConfigFile()) : (getAppName() + "." + getConfigFile())), environment);
             org.apache.dubbo.common.config.Environment.getInstance().setExternalConfigMap(externalProperties);
             org.apache.dubbo.common.config.Environment.getInstance().setAppExternalConfigMap(appExternalProperties);
         }
     }
 
+    // 从 environment中 获取 key对应的 value。1.如果value类型为map，则将map中所有元素都返回；2.如果value类型为string，则将string解析为键值对后返回；
     private Map<String, String> getConfigurations(String key, Environment environment) {
         Object rawProperties = environment.getProperty(key, Object.class);
         Map<String, String> externalProperties = new HashMap<>();

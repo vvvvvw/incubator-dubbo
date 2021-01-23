@@ -40,7 +40,7 @@ public abstract class AbstractProtocol implements Protocol {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    //服务暴露者集合 Map<{group}/{interfaceName}:{version},Exporter>
+    //每个协议对应的服务暴露者集合 Map<{group}/{interfaceName}:{version},Exporter>
     protected final Map<String, Exporter<?>> exporterMap = new ConcurrentHashMap<String, Exporter<?>>();
 
     //服务引用者集合

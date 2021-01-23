@@ -38,6 +38,7 @@ import java.util.Map;
  * @see org.apache.dubbo.cache.filter.CacheFilter
  * @see Cache
  */
+//当前请求的上下文
 public class ThreadLocalCache implements Cache {
 
     /**

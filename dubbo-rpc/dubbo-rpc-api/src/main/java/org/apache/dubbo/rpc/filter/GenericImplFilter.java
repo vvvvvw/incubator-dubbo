@@ -56,7 +56,7 @@ public class GenericImplFilter implements Filter {
         // TODO: 服务端有三种序列化方式，为什么客户端序列化 每次只有两种  by 15258 2019/5/14 23:26
         // 获得泛化的值
         String generic = invoker.getUrl().getParameter(Constants.GENERIC_KEY);
-        //如果是 generic 不为空，但是方法不是 泛化调用
+        //如果是 generic 不为空，但是方法名不是 $invoke(调用时的方法名不是 $invoke(也就是说 客户端其实有服务端的api jar包，只不过是通过 泛化调用的方式来调用))
         //其实 转换只有两种：javabean或者pojo
         // 如果该值是nativejava或者bean或者true，并且不是泛化调用
         if (ProtocolUtils.isGeneric(generic)
@@ -169,7 +169,7 @@ public class GenericImplFilter implements Filter {
             return result;
         }
 
-        // 如果是泛接口调用
+        // 如果是直接使用泛化接口调用
         if (invocation.getMethodName().equals(Constants.$INVOKE)
                 && invocation.getArguments() != null
                 && invocation.getArguments().length == 3
@@ -189,7 +189,7 @@ public class GenericImplFilter implements Filter {
                 //如果是 javabean的序列化方式
             } else if (ProtocolUtils.isBeanGenericSerialization(generic)) {
                 for (Object arg : args) {
-                    // 如果调用消息不是字节数组类型，则抛出异常
+                    // 如果调用消息不是JavaBeanDescriptor类型，则抛出异常
                     if (!(arg instanceof JavaBeanDescriptor)) {
                         error(generic, JavaBeanDescriptor.class.getName(), arg.getClass().getName());
                     }
